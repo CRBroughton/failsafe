@@ -1,0 +1,49 @@
+{
+  "name": "@crbroughton/failsafe",
+  "type": "module",
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.15.0",
+  "description": "Type-safe error handling utilities for TypeScript",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/safe/index.d.mts",
+      "import": "./dist/safe/index.mjs"
+    },
+    "./try": {
+      "types": "./dist/try/index.d.mts",
+      "import": "./dist/try/index.mjs"
+    },
+    "./pipe": {
+      "types": "./dist/pipe/index.d.mts",
+      "import": "./dist/pipe/index.mjs"
+    }
+  },
+  "main": "./dist/safe/index.mjs",
+  "types": "./dist/safe/index.d.mts",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "unbuild",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^3.9.2",
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint": "^9.17.0",
+    "happy-dom": "^15.11.7",
+    "nx": "^20.3.0",
+    "typescript": "^5.7.2",
+    "unbuild": "^3.0.1",
+    "vitest": "^2.1.8"
+  }
+}

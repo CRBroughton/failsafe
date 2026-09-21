@@ -1,0 +1,8 @@
+node_modules
+dist
+coverage
+.nx/cache
+.nx/workspace-data
+.devenv
+.direnv
+*.log
