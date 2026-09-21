@@ -5,6 +5,10 @@
   "packageManager": "pnpm@9.15.0",
   "description": "Type-safe error handling utilities for TypeScript",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CRBroughton/failsafe.git"
+  },
   "sideEffects": false,
   "exports": {
     ".": {
