@@ -1,5 +1,12 @@
 # @crbroughton/failsafe
 
+## 0.2.1
+
+### Patch Changes
+
+- Add the missing MIT LICENSE file. The package.json license field already
+  said MIT; the file itself was never committed.
+
 ## 0.2.0
 
 ### Minor Changes

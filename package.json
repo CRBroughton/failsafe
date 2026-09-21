@@ -1,7 +1,7 @@
 {
   "name": "@crbroughton/failsafe",
   "type": "module",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "packageManager": "pnpm@9.15.0",
   "description": "Type-safe error handling utilities for TypeScript",
   "license": "MIT",
