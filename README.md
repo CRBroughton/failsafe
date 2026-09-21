@@ -4,6 +4,9 @@ Type-safe error handling utilities for TypeScript. A `Result<T, E>` type
 (inspired by Rust) plus helpers for turning throwing browser/Node APIs into
 values instead of exceptions.
 
+Lightweight, dependency-free alternative to neverthrow, plus additional
+helpers for wrapping browser/Node APIs that throw exceptions.
+
 ## Install
 
 ```sh
