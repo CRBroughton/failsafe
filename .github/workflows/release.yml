@@ -41,13 +41,5 @@ jobs:
       - name: Build
         run: devenv shell -- pnpm exec nx run failsafe:build
 
-      - name: Debug OIDC env
-        run: |
-          echo "outer shell: ACTIONS_ID_TOKEN_REQUEST_URL set = ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}"
-          echo "outer shell: ACTIONS_ID_TOKEN_REQUEST_TOKEN set = ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+yes}"
-          devenv shell -- sh -c 'echo "devenv shell: ACTIONS_ID_TOKEN_REQUEST_URL set = ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}"'
-          devenv shell -- sh -c 'echo "devenv shell: ACTIONS_ID_TOKEN_REQUEST_TOKEN set = ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+yes}"'
-          devenv shell -- npm --version
-
       - name: Publish to npm
         run: devenv shell -- npm publish --access public
