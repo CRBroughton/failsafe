@@ -41,8 +41,5 @@ jobs:
       - name: Build
         run: devenv shell -- pnpm exec nx run failsafe:build
 
-      - name: Configure npm auth
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
       - name: Publish to npm
-        run: devenv shell -- pnpm publish --access public --no-git-checks
+        run: devenv shell -- npm publish --access public
