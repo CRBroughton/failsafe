@@ -7,7 +7,6 @@ const WORDS_PER_MINUTE = 200
 export default defineEventHandler(async (event): Promise<ReadingTimeResponse> => {
   const { text } = await readValidatedBody(event, readingTimeRequestSchema.parse)
 
-  // Five chained functions — the max arity `pipe()` supports.
   const label = pipe(
     text,
     s => s.trim(),

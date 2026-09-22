@@ -5,7 +5,6 @@ import { fail, gen } from "@crbroughton/failsafe/gen"
 export default defineEventHandler(async (event): Promise<ValidateSlugResponse> => {
   const { input } = await readValidatedBody(event, validateSlugRequestSchema.parse)
 
-  // Sync generator — gen() returns Result<T, E> directly here, no Promise.
   const result = gen(function* () {
     if (input.trim() === "") {
       return yield * fail<EmptyFieldError>({ tag: "EmptyFieldError", field: "slug" })

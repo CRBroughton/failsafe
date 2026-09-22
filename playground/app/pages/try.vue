@@ -22,10 +22,7 @@ const jsonLoading = ref(false)
 async function runParseJson() {
   jsonLoading.value = true
   const body: ParseJsonRequest = { raw: jsonRaw.value }
-  // The endpoint already returns a Result-shaped body, but the fetch
-  // itself can still fail for reasons that Result never captures —
-  // offline, CORS, a non-2xx status $fetch throws on — so it's wrapped
-  // in safe() here too, and matchResult() handles both outcomes.
+
   const result = await safe($fetch<ParseJsonResponse>("/api/try/parse-json", { method: "POST", body }))
   jsonResult.value = matchResult(result, {
     ok: (value): ParseJsonDisplay => value,
@@ -43,6 +40,7 @@ const urlLoading = ref(false)
 async function runParseUrl() {
   urlLoading.value = true
   const body: ParseUrlRequest = { input: urlInput.value }
+
   const result = await safe($fetch<ParseUrlResponse>("/api/try/parse-url", { method: "POST", body }))
   urlResult.value = matchResult(result, {
     ok: (value): ParseUrlDisplay => value,
@@ -61,6 +59,7 @@ const base64Loading = ref(false)
 async function runBase64() {
   base64Loading.value = true
   const body: Base64Request = { mode: base64Mode.value, input: base64Input.value }
+
   const result = await safe($fetch<Base64Response>("/api/try/base64", { method: "POST", body }))
   base64Result.value = matchResult(result, {
     ok: (value): Base64Display => value,
@@ -78,13 +77,13 @@ const cloneLoading = ref(false)
 
 async function runClone() {
   cloneLoading.value = true
-  // Not valid JSON (e.g. a bare word)? Fall back to sending the raw
-  // string itself — either way the clone demo below still has a value.
+
   const parsedValue = matchResult(tryJSONParse(cloneInput.value), {
     ok: value => value,
     err: () => cloneInput.value,
   })
   const body: CloneRequest = { value: parsedValue, forceNonCloneable: forceNonCloneable.value }
+
   const result = await safe($fetch<CloneResponse>("/api/try/clone", { method: "POST", body }))
   cloneResult.value = matchResult(result, {
     ok: (value): CloneDisplay => value,

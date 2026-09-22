@@ -19,8 +19,6 @@ function simulateUpstreamCall(shouldFail: boolean): Promise<{ status: "ok", late
 export default defineEventHandler(async (event): Promise<UpstreamResponse> => {
   const { shouldFail } = await readValidatedBody(event, upstreamRequestSchema.parse)
 
-  // The Promise overload: `safe` awaits the promise itself and catches a
-  // rejection, rather than wrapping a throwing sync function.
   const result = await safe(
     simulateUpstreamCall(shouldFail),
     (error): { tag: "UpstreamError", message: string } => ({

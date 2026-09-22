@@ -13,10 +13,7 @@ const divideLoading = ref(false)
 async function runDivide() {
   divideLoading.value = true
   const body: DivideRequest = { a: a.value, b: b.value }
-  // The endpoint already returns a Result-shaped body, but the fetch
-  // itself can still fail for reasons that Result never captures —
-  // offline, CORS, a non-2xx status $fetch throws on — so it's wrapped
-  // in safe() here too, and matchResult() handles both outcomes.
+
   const result = await safe($fetch<DivideResponse>("/api/safe/divide", { method: "POST", body }))
   divideResult.value = matchResult(result, {
     ok: (value): DivideDisplay => value,
@@ -34,6 +31,7 @@ const upstreamLoading = ref(false)
 async function runUpstream() {
   upstreamLoading.value = true
   const body: UpstreamRequest = { shouldFail: shouldFail.value }
+
   const result = await safe($fetch<UpstreamResponse>("/api/safe/upstream", { method: "POST", body }))
   upstreamResult.value = matchResult(result, {
     ok: (value): UpstreamDisplay => value,

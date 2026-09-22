@@ -13,10 +13,7 @@ const loginLoading = ref(false)
 async function runLogin() {
   loginLoading.value = true
   const body: LoginRequest = { email: email.value, password: password.value }
-  // The endpoint already returns a Result via gen()/fail()/unwrap(), but
-  // the fetch itself can still fail at the network layer (offline, CORS,
-  // a non-2xx status), which gen() never sees — so it's wrapped in
-  // safe() here too, and matchResult() handles both outcomes.
+
   const result = await safe($fetch<LoginResponse>("/api/gen/login", { method: "POST", body }))
   loginResult.value = matchResult(result, {
     ok: (value): LoginDisplay => value,
@@ -34,6 +31,7 @@ const slugLoading = ref(false)
 async function runValidateSlug() {
   slugLoading.value = true
   const body: ValidateSlugRequest = { input: slugInput.value }
+
   const result = await safe($fetch<ValidateSlugResponse>("/api/gen/validate-slug", { method: "POST", body }))
   slugResult.value = matchResult(result, {
     ok: (value): ValidateSlugDisplay => value,

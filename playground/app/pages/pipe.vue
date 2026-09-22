@@ -12,11 +12,7 @@ const slugLoading = ref(false)
 async function runSlugify() {
   slugLoading.value = true
   const body: SlugifyRequest = { input: slugInput.value }
-  // pipe() itself never returns a Result — the endpoint replies with a
-  // plain object. Wrapping both matchResult() branches into { ok, ... }
-  // here is purely for <ResultDisplay>, which colors by the presence of
-  // `ok`. The $fetch call is still wrapped in safe() to catch a
-  // network-layer failure the endpoint itself never sees.
+
   const result = await safe($fetch<SlugifyResponse>("/api/pipe/slugify", { method: "POST", body }))
   slugResult.value = matchResult(result, {
     ok: (value): SlugifyDisplay => ({ ok: true, value }),
@@ -37,6 +33,7 @@ const readingLoading = ref(false)
 async function runReadingTime() {
   readingLoading.value = true
   const body: ReadingTimeRequest = { text: readingText.value }
+
   const result = await safe($fetch<ReadingTimeResponse>("/api/pipe/reading-time", { method: "POST", body }))
   readingResult.value = matchResult(result, {
     ok: (value): ReadingTimeDisplay => ({ ok: true, value }),
