@@ -1,0 +1,114 @@
+<script setup lang="ts">
+import type { LoginRequest, LoginResponse, ValidateSlugRequest, ValidateSlugResponse } from "#shared/utils/gen.schema"
+import type { ClientError } from "#shared/utils/result.schema"
+import { matchResult, safe } from "@crbroughton/failsafe"
+
+type LoginDisplay = LoginResponse | { ok: false, error: ClientError }
+
+const email = ref("craig@example.com")
+const password = ref("correct-password")
+const loginResult = ref<LoginDisplay | null>(null)
+const loginLoading = ref(false)
+
+async function runLogin() {
+  loginLoading.value = true
+  const body: LoginRequest = { email: email.value, password: password.value }
+  // The endpoint already returns a Result via gen()/fail()/unwrap(), but
+  // the fetch itself can still fail at the network layer (offline, CORS,
+  // a non-2xx status), which gen() never sees — so it's wrapped in
+  // safe() here too, and matchResult() handles both outcomes.
+  const result = await safe($fetch<LoginResponse>("/api/gen/login", { method: "POST", body }))
+  loginResult.value = matchResult(result, {
+    ok: (value): LoginDisplay => value,
+    err: (error): LoginDisplay => ({ ok: false, error: { tag: "FetchError", message: error.message } }),
+  })
+  loginLoading.value = false
+}
+
+type ValidateSlugDisplay = ValidateSlugResponse | { ok: false, error: ClientError }
+
+const slugInput = ref("hello world")
+const slugResult = ref<ValidateSlugDisplay | null>(null)
+const slugLoading = ref(false)
+
+async function runValidateSlug() {
+  slugLoading.value = true
+  const body: ValidateSlugRequest = { input: slugInput.value }
+  const result = await safe($fetch<ValidateSlugResponse>("/api/gen/validate-slug", { method: "POST", body }))
+  slugResult.value = matchResult(result, {
+    ok: (value): ValidateSlugDisplay => value,
+    err: (error): ValidateSlugDisplay => ({ ok: false, error: { tag: "FetchError", message: error.message } }),
+  })
+  slugLoading.value = false
+}
+</script>
+
+<template>
+  <div>
+    <h1 class="text-2xl font-bold text-gray-50">
+      @crbroughton/failsafe/gen
+    </h1>
+    <p class="mt-2 text-gray-400">
+      Early-return error propagation for <code>Result</code> — like Rust's
+      <code>?</code> operator, via generators and <code>yield*</code>.
+    </p>
+
+    <div class="mt-8 grid gap-4">
+      <DemoCard title="Login flow (async)" wraps="gen(async function* () { … })">
+        <p class="mb-3 text-sm text-gray-400">
+          Chains two real (~200ms delayed) async steps via
+          <code>yield* unwrap(await …)</code>, plus a sync
+          <code>yield* fail(…)</code> for invalid input. Try an email
+          without <code>@</code>, the password
+          <code>wrong-password</code>, or leave everything as-is for
+          success.
+        </p>
+        <div class="flex flex-wrap items-center gap-3">
+          <input
+            v-model="email"
+            type="text"
+            placeholder="email"
+            class="min-w-48 flex-1 rounded border border-gray-700 bg-gray-950 px-3 py-1.5 font-mono text-sm"
+          >
+          <input
+            v-model="password"
+            type="text"
+            placeholder="password"
+            class="min-w-48 flex-1 rounded border border-gray-700 bg-gray-950 px-3 py-1.5 font-mono text-sm"
+          >
+          <button
+            class="rounded-md bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-900 hover:bg-white"
+            :disabled="loginLoading"
+            @click="runLogin"
+          >
+            Run
+          </button>
+        </div>
+        <ResultDisplay :result="loginResult" :loading="loginLoading" />
+      </DemoCard>
+
+      <DemoCard title="Validate a slug (sync)" wraps="gen(function* () { … })">
+        <p class="mb-3 text-sm text-gray-400">
+          The sync overload — <code>gen()</code> returns
+          <code>Result&lt;T, E&gt;</code> directly, no <code>Promise</code>.
+          Clear the field to see <code>EmptyFieldError</code>.
+        </p>
+        <div class="flex flex-wrap items-center gap-3">
+          <input
+            v-model="slugInput"
+            type="text"
+            class="min-w-64 flex-1 rounded border border-gray-700 bg-gray-950 px-3 py-1.5 font-mono text-sm"
+          >
+          <button
+            class="rounded-md bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-900 hover:bg-white"
+            :disabled="slugLoading"
+            @click="runValidateSlug"
+          >
+            Run
+          </button>
+        </div>
+        <ResultDisplay :result="slugResult" :loading="slugLoading" />
+      </DemoCard>
+    </div>
+  </div>
+</template>

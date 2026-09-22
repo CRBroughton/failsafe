@@ -6,3 +6,7 @@ coverage
 .devenv
 .direnv
 *.log
+.nuxt
+.output
+.nitro
+.cache
