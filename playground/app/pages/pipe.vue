@@ -1,9 +1,7 @@
 <script setup lang="ts">
+import type { ReadingTimeDisplay, ReadingTimeRequest, ReadingTimeResponse, SlugifyDisplay, SlugifyRequest, SlugifyResponse } from "#shared/utils/pipe.schema"
 import type { ClientError } from "#shared/utils/result.schema"
-import type { ReadingTimeRequest, ReadingTimeResponse, SlugifyRequest, SlugifyResponse } from "#shared/utils/pipe.schema"
-import { matchResult, safe } from "@crbroughton/failsafe"
-
-type SlugifyDisplay = { ok: true, value: SlugifyResponse } | { ok: false, error: ClientError }
+import { safe } from "@crbroughton/failsafe"
 
 const slugInput = ref("  Hello World  ")
 const slugResult = ref<SlugifyDisplay | null>(null)
@@ -13,15 +11,15 @@ async function runSlugify() {
   slugLoading.value = true
   const body: SlugifyRequest = { input: slugInput.value }
 
-  const result = await safe($fetch<SlugifyResponse>("/api/pipe/slugify", { method: "POST", body }))
-  slugResult.value = matchResult(result, {
-    ok: (value): SlugifyDisplay => ({ ok: true, value }),
-    err: (error): SlugifyDisplay => ({ ok: false, error: { tag: "FetchError", message: error.message } }),
-  })
+  // pipe()'s endpoint never fails, so unlike safe/try/gen there's no
+  // nested Result to flatten with chain() — safe()'s own Result already
+  // matches SlugifyDisplay's shape exactly.
+  slugResult.value = await safe(
+    $fetch<SlugifyResponse>("/api/pipe/slugify", { method: "POST", body }),
+    (e): ClientError => ({ tag: "FetchError", message: e instanceof Error ? e.message : "Request failed" }),
+  )
   slugLoading.value = false
 }
-
-type ReadingTimeDisplay = { ok: true, value: ReadingTimeResponse } | { ok: false, error: ClientError }
 
 const readingText = ref(
   "FailSafe is a lightweight, dependency-free alternative to neverthrow "
@@ -34,11 +32,10 @@ async function runReadingTime() {
   readingLoading.value = true
   const body: ReadingTimeRequest = { text: readingText.value }
 
-  const result = await safe($fetch<ReadingTimeResponse>("/api/pipe/reading-time", { method: "POST", body }))
-  readingResult.value = matchResult(result, {
-    ok: (value): ReadingTimeDisplay => ({ ok: true, value }),
-    err: (error): ReadingTimeDisplay => ({ ok: false, error: { tag: "FetchError", message: error.message } }),
-  })
+  readingResult.value = await safe(
+    $fetch<ReadingTimeResponse>("/api/pipe/reading-time", { method: "POST", body }),
+    (e): ClientError => ({ tag: "FetchError", message: e instanceof Error ? e.message : "Request failed" }),
+  )
   readingLoading.value = false
 }
 </script>

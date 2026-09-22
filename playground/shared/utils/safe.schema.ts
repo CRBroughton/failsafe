@@ -1,4 +1,4 @@
-import { resultSchema } from "#shared/utils/result.schema"
+import { clientErrorSchema, resultSchema } from "#shared/utils/result.schema"
 import { z } from "zod"
 
 export const divideRequestSchema = z.object({
@@ -15,6 +15,14 @@ export type DivisionError = z.infer<typeof divisionErrorSchema>
 
 export const divideResponseSchema = resultSchema(z.number(), divisionErrorSchema)
 export type DivideResponse = z.infer<typeof divideResponseSchema>
+
+export const divideDisplayErrorSchema = z.discriminatedUnion("tag", [
+  clientErrorSchema,
+  divisionErrorSchema,
+])
+
+export const divideDisplaySchema = resultSchema(z.number(), divideDisplayErrorSchema)
+export type DivideDisplay = z.infer<typeof divideDisplaySchema>
 
 export const upstreamRequestSchema = z.object({
   shouldFail: z.boolean(),
@@ -34,3 +42,11 @@ export const upstreamOkSchema = z.object({
 
 export const upstreamResponseSchema = resultSchema(upstreamOkSchema, upstreamErrorSchema)
 export type UpstreamResponse = z.infer<typeof upstreamResponseSchema>
+
+export const upstreamDisplayErrorSchema = z.discriminatedUnion("tag", [
+  clientErrorSchema,
+  upstreamErrorSchema,
+])
+
+export const upstreamDisplaySchema = resultSchema(upstreamOkSchema, upstreamDisplayErrorSchema)
+export type UpstreamDisplay = z.infer<typeof upstreamDisplaySchema>

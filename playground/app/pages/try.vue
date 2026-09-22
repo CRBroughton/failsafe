@@ -1,19 +1,25 @@
 <script setup lang="ts">
 import type { ClientError } from "#shared/utils/result.schema"
 import type {
+  Base64Display,
+  Base64Error,
   Base64Request,
   Base64Response,
+  CloneDisplay,
   CloneRequest,
   CloneResponse,
+  JSONParseError,
+  ParseJsonDisplay,
   ParseJsonRequest,
   ParseJsonResponse,
+  ParseUrlDisplay,
   ParseUrlRequest,
   ParseUrlResponse,
+  StructuredCloneError,
+  URLParseError,
 } from "#shared/utils/try.schema"
-import { matchResult, safe } from "@crbroughton/failsafe"
+import { chain, matchResult, safe } from "@crbroughton/failsafe"
 import { tryJSONParse } from "@crbroughton/failsafe/try"
-
-type ParseJsonDisplay = ParseJsonResponse | { ok: false, error: ClientError }
 
 const jsonRaw = ref("{\"name\":\"ada\"}")
 const jsonResult = ref<ParseJsonDisplay | null>(null)
@@ -23,15 +29,13 @@ async function runParseJson() {
   jsonLoading.value = true
   const body: ParseJsonRequest = { raw: jsonRaw.value }
 
-  const result = await safe($fetch<ParseJsonResponse>("/api/try/parse-json", { method: "POST", body }))
-  jsonResult.value = matchResult(result, {
-    ok: (value): ParseJsonDisplay => value,
-    err: (error): ParseJsonDisplay => ({ ok: false, error: { tag: "FetchError", message: error.message } }),
-  })
+  const fetched = await safe(
+    $fetch<ParseJsonResponse>("/api/try/parse-json", { method: "POST", body }),
+    (e): ClientError | JSONParseError => ({ tag: "FetchError", message: e instanceof Error ? e.message : "Request failed" }),
+  )
+  jsonResult.value = chain(fetched, parseJsonResponse => parseJsonResponse)
   jsonLoading.value = false
 }
-
-type ParseUrlDisplay = ParseUrlResponse | { ok: false, error: ClientError }
 
 const urlInput = ref("https://example.com/path")
 const urlResult = ref<ParseUrlDisplay | null>(null)
@@ -41,15 +45,13 @@ async function runParseUrl() {
   urlLoading.value = true
   const body: ParseUrlRequest = { input: urlInput.value }
 
-  const result = await safe($fetch<ParseUrlResponse>("/api/try/parse-url", { method: "POST", body }))
-  urlResult.value = matchResult(result, {
-    ok: (value): ParseUrlDisplay => value,
-    err: (error): ParseUrlDisplay => ({ ok: false, error: { tag: "FetchError", message: error.message } }),
-  })
+  const fetched = await safe(
+    $fetch<ParseUrlResponse>("/api/try/parse-url", { method: "POST", body }),
+    (e): ClientError | URLParseError => ({ tag: "FetchError", message: e instanceof Error ? e.message : "Request failed" }),
+  )
+  urlResult.value = chain(fetched, parseUrlResponse => parseUrlResponse)
   urlLoading.value = false
 }
-
-type Base64Display = Base64Response | { ok: false, error: ClientError }
 
 const base64Mode = ref<"encode" | "decode">("encode")
 const base64Input = ref("hello")
@@ -60,15 +62,13 @@ async function runBase64() {
   base64Loading.value = true
   const body: Base64Request = { mode: base64Mode.value, input: base64Input.value }
 
-  const result = await safe($fetch<Base64Response>("/api/try/base64", { method: "POST", body }))
-  base64Result.value = matchResult(result, {
-    ok: (value): Base64Display => value,
-    err: (error): Base64Display => ({ ok: false, error: { tag: "FetchError", message: error.message } }),
-  })
+  const fetched = await safe(
+    $fetch<Base64Response>("/api/try/base64", { method: "POST", body }),
+    (e): ClientError | Base64Error => ({ tag: "FetchError", message: e instanceof Error ? e.message : "Request failed" }),
+  )
+  base64Result.value = chain(fetched, base64Response => base64Response)
   base64Loading.value = false
 }
-
-type CloneDisplay = CloneResponse | { ok: false, error: ClientError }
 
 const cloneInput = ref("{\"a\":1,\"b\":[1,2,3]}")
 const forceNonCloneable = ref(false)
@@ -84,11 +84,11 @@ async function runClone() {
   })
   const body: CloneRequest = { value: parsedValue, forceNonCloneable: forceNonCloneable.value }
 
-  const result = await safe($fetch<CloneResponse>("/api/try/clone", { method: "POST", body }))
-  cloneResult.value = matchResult(result, {
-    ok: (value): CloneDisplay => value,
-    err: (error): CloneDisplay => ({ ok: false, error: { tag: "FetchError", message: error.message } }),
-  })
+  const fetched = await safe(
+    $fetch<CloneResponse>("/api/try/clone", { method: "POST", body }),
+    (e): ClientError | StructuredCloneError => ({ tag: "FetchError", message: e instanceof Error ? e.message : "Request failed" }),
+  )
+  cloneResult.value = chain(fetched, cloneResponse => cloneResponse)
   cloneLoading.value = false
 }
 </script>

@@ -1,4 +1,4 @@
-import { resultSchema } from "#shared/utils/result.schema"
+import { clientErrorSchema, resultSchema } from "#shared/utils/result.schema"
 import { z } from "zod"
 
 export const parseJsonRequestSchema = z.object({
@@ -14,6 +14,14 @@ export type JSONParseError = z.infer<typeof jsonParseErrorSchema>
 
 export const parseJsonResponseSchema = resultSchema(z.unknown(), jsonParseErrorSchema)
 export type ParseJsonResponse = z.infer<typeof parseJsonResponseSchema>
+
+export const parseJsonDisplayErrorSchema = z.discriminatedUnion("tag", [
+  clientErrorSchema,
+  jsonParseErrorSchema,
+])
+
+export const parseJsonDisplaySchema = resultSchema(z.unknown(), parseJsonDisplayErrorSchema)
+export type ParseJsonDisplay = z.infer<typeof parseJsonDisplaySchema>
 
 export const jsonStringifyErrorSchema = z.object({
   tag: z.literal("JSONStringifyError"),
@@ -42,6 +50,14 @@ export const parsedUrlSchema = z.object({
 export const parseUrlResponseSchema = resultSchema(parsedUrlSchema, urlParseErrorSchema)
 export type ParseUrlResponse = z.infer<typeof parseUrlResponseSchema>
 
+export const parseUrlDisplayErrorSchema = z.discriminatedUnion("tag", [
+  clientErrorSchema,
+  urlParseErrorSchema,
+])
+
+export const parseUrlDisplaySchema = resultSchema(parsedUrlSchema, parseUrlDisplayErrorSchema)
+export type ParseUrlDisplay = z.infer<typeof parseUrlDisplaySchema>
+
 export const base64RequestSchema = z.object({
   mode: z.enum(["encode", "decode"]),
   input: z.string(),
@@ -57,6 +73,14 @@ export type Base64Error = z.infer<typeof base64ErrorSchema>
 export const base64ResponseSchema = resultSchema(z.string(), base64ErrorSchema)
 export type Base64Response = z.infer<typeof base64ResponseSchema>
 
+export const base64DisplayErrorSchema = z.discriminatedUnion("tag", [
+  clientErrorSchema,
+  base64ErrorSchema,
+])
+
+export const base64DisplaySchema = resultSchema(z.string(), base64DisplayErrorSchema)
+export type Base64Display = z.infer<typeof base64DisplaySchema>
+
 export const cloneRequestSchema = z.object({
   value: z.unknown(),
   forceNonCloneable: z.boolean(),
@@ -70,3 +94,11 @@ export type StructuredCloneError = z.infer<typeof structuredCloneErrorSchema>
 
 export const cloneResponseSchema = resultSchema(z.unknown(), structuredCloneErrorSchema)
 export type CloneResponse = z.infer<typeof cloneResponseSchema>
+
+export const cloneDisplayErrorSchema = z.discriminatedUnion("tag", [
+  clientErrorSchema,
+  structuredCloneErrorSchema,
+])
+
+export const cloneDisplaySchema = resultSchema(z.unknown(), cloneDisplayErrorSchema)
+export type CloneDisplay = z.infer<typeof cloneDisplaySchema>

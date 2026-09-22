@@ -1,9 +1,16 @@
 <script setup lang="ts">
 import type { ClientError } from "#shared/utils/result.schema"
-import type { DivideRequest, DivideResponse, UpstreamRequest, UpstreamResponse } from "#shared/utils/safe.schema"
-import { matchResult, safe } from "@crbroughton/failsafe"
-
-type DivideDisplay = DivideResponse | { ok: false, error: ClientError }
+import type {
+  DivideDisplay,
+  DivideRequest,
+  DivideResponse,
+  DivisionError,
+  UpstreamDisplay,
+  UpstreamError,
+  UpstreamRequest,
+  UpstreamResponse,
+} from "#shared/utils/safe.schema"
+import { chain, safe } from "@crbroughton/failsafe"
 
 const a = ref(10)
 const b = ref(0)
@@ -14,15 +21,17 @@ async function runDivide() {
   divideLoading.value = true
   const body: DivideRequest = { a: a.value, b: b.value }
 
-  const result = await safe($fetch<DivideResponse>("/api/safe/divide", { method: "POST", body }))
-  divideResult.value = matchResult(result, {
-    ok: (value): DivideDisplay => value,
-    err: (error): DivideDisplay => ({ ok: false, error: { tag: "FetchError", message: error.message } }),
-  })
+  // mapError is typed wide enough to cover the endpoint's own error too,
+  // so chain() can flatten Result<DivideResponse, ClientError> into a
+  // single Result<number, ClientError | DivisionError> in one step —
+  // which is exactly what DivideDisplay is, so no further unwrapping.
+  const fetched = await safe(
+    $fetch<DivideResponse>("/api/safe/divide", { method: "POST", body }),
+    (e): ClientError | DivisionError => ({ tag: "FetchError", message: e instanceof Error ? e.message : "Request failed" }),
+  )
+  divideResult.value = chain(fetched, divideResponse => divideResponse)
   divideLoading.value = false
 }
-
-type UpstreamDisplay = UpstreamResponse | { ok: false, error: ClientError }
 
 const shouldFail = ref(false)
 const upstreamResult = ref<UpstreamDisplay | null>(null)
@@ -32,11 +41,11 @@ async function runUpstream() {
   upstreamLoading.value = true
   const body: UpstreamRequest = { shouldFail: shouldFail.value }
 
-  const result = await safe($fetch<UpstreamResponse>("/api/safe/upstream", { method: "POST", body }))
-  upstreamResult.value = matchResult(result, {
-    ok: (value): UpstreamDisplay => value,
-    err: (error): UpstreamDisplay => ({ ok: false, error: { tag: "FetchError", message: error.message } }),
-  })
+  const fetched = await safe(
+    $fetch<UpstreamResponse>("/api/safe/upstream", { method: "POST", body }),
+    (e): ClientError | UpstreamError => ({ tag: "FetchError", message: e instanceof Error ? e.message : "Request failed" }),
+  )
+  upstreamResult.value = chain(fetched, upstreamResponse => upstreamResponse)
   upstreamLoading.value = false
 }
 </script>
@@ -52,8 +61,8 @@ async function runUpstream() {
       promise and returns a <code>Result</code> instead. Each demo below also
       wraps its own <code>$fetch</code> call in <code>safe()</code>, typed
       end-to-end against the shared Zod schema the endpoint validates
-      against, and unwraps it with <code>matchResult()</code> — see the
-      script block.
+      against, then flattens the nested <code>Result</code> with
+      <code>chain()</code> — see the script block.
     </p>
 
     <div class="mt-8 grid gap-4">

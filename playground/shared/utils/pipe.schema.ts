@@ -1,3 +1,4 @@
+import { clientErrorSchema, resultSchema } from "#shared/utils/result.schema"
 import { z } from "zod"
 
 export const slugifyRequestSchema = z.object({
@@ -10,6 +11,9 @@ export const slugifyResponseSchema = z.object({
 })
 export type SlugifyResponse = z.infer<typeof slugifyResponseSchema>
 
+export const slugifyDisplaySchema = resultSchema(slugifyResponseSchema, clientErrorSchema)
+export type SlugifyDisplay = z.infer<typeof slugifyDisplaySchema>
+
 export const readingTimeRequestSchema = z.object({
   text: z.string(),
 })
@@ -19,3 +23,6 @@ export const readingTimeResponseSchema = z.object({
   label: z.string(),
 })
 export type ReadingTimeResponse = z.infer<typeof readingTimeResponseSchema>
+
+export const readingTimeDisplaySchema = resultSchema(readingTimeResponseSchema, clientErrorSchema)
+export type ReadingTimeDisplay = z.infer<typeof readingTimeDisplaySchema>
