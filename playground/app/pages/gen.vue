@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { EmptyFieldError, LoginRequest, LoginResponse, ValidateSlugRequest, ValidateSlugResponse } from "#shared/utils/gen.schema"
+import type { EmptyFieldError, LoginError, LoginRequest, LoginResponse, ValidateSlugRequest, ValidateSlugResponse } from "#shared/utils/gen.schema"
 import type { ClientError } from "#shared/utils/result.schema"
 import { chain, match, matchResult, safe } from "@crbroughton/failsafe"
 import { gen, unwrap } from "@crbroughton/failsafe/gen"
 
-type LoginDisplay = LoginResponse | { ok: false, error: ClientError }
+type LoginDisplay = { ok: true, value: Extract<LoginResponse, { ok: true }>["value"] } | { ok: false, error: ClientError | LoginError }
 
 const email = ref("craig@example.com")
 const password = ref("correct-password")
@@ -16,29 +16,29 @@ async function runLogin() {
   const body: LoginRequest = { email: email.value, password: password.value }
 
   // Two Result-producing steps, chained with gen(): the network fetch
-  // (safe(), error is a plain untagged Error) and the endpoint's own
-  // LoginResponse (error is the real tagged union). unwrap() flattens
-  // both into a single Result instead of nesting one inside the other.
+  // (safe(), mapError tags its Error into a ClientError up front) and
+  // the endpoint's own LoginResponse (already tagged). Both yield*
+  // points now contribute tagged errors, so gen()'s inferred union is
+  // uniformly tagged — no runtime guard needed before match().
   const result = await gen(async function* () {
-    const loginResponse = yield* unwrap(await safe($fetch<LoginResponse>("/api/gen/login", { method: "POST", body })))
+    const loginResponse = yield* unwrap(await safe(
+      $fetch<LoginResponse>("/api/gen/login", { method: "POST", body }),
+      (e): ClientError => ({ tag: "FetchError", message: e instanceof Error ? e.message : "Request failed" }),
+    ))
     return yield* unwrap(loginResponse)
   })
 
   loginResult.value = matchResult(result, {
     ok: (value): LoginDisplay => ({ ok: true, value }),
     err: (error): LoginDisplay => {
-      // error is Error | LoginError — only the LoginError branch has a
-      // tag, so match() needs that narrowed first.
-      if ("tag" in error) {
-        match(error, {
-          InvalidCredentials: e => console.warn("invalid credentials:", e.email),
-          NetworkError: e => console.warn("upstream failed:", e.status),
-          JSONStringifyError: () => console.warn("could not serialize profile"),
-          JSONParseError: e => console.warn("could not parse profile:", e.raw),
-        })
-        return { ok: false, error }
-      }
-      return { ok: false, error: { tag: "FetchError", message: error.message } }
+      match(error, {
+        FetchError: e => console.warn("fetch failed:", e.message),
+        InvalidCredentials: e => console.warn("invalid credentials:", e.email),
+        NetworkError: e => console.warn("upstream failed:", e.status),
+        JSONStringifyError: () => console.warn("could not serialize profile"),
+        JSONParseError: e => console.warn("could not parse profile:", e.raw),
+      })
+      return { ok: false, error }
     },
   })
   loginLoading.value = false
