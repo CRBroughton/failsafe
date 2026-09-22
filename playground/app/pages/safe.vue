@@ -66,13 +66,13 @@ async function runUpstream() {
           <input
             v-model.number="a"
             type="number"
-            class="w-24 rounded border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm"
+            class="w-24 rounded border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm text-gray-100"
           >
           <span class="text-gray-500">÷</span>
           <input
             v-model.number="b"
             type="number"
-            class="w-24 rounded border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm"
+            class="w-24 rounded border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm text-gray-100"
           >
           <button
             class="rounded-md bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-900 hover:bg-white"

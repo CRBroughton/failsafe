@@ -114,7 +114,7 @@ async function runClone() {
           <input
             v-model="jsonRaw"
             type="text"
-            class="min-w-64 flex-1 rounded border border-gray-700 bg-gray-950 px-3 py-1.5 font-mono text-sm"
+            class="min-w-64 flex-1 rounded border border-gray-700 bg-gray-950 px-3 py-1.5 font-mono text-sm text-gray-100"
           >
           <button
             class="rounded-md bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-900 hover:bg-white"
@@ -135,7 +135,7 @@ async function runClone() {
           <input
             v-model="urlInput"
             type="text"
-            class="min-w-64 flex-1 rounded border border-gray-700 bg-gray-950 px-3 py-1.5 font-mono text-sm"
+            class="min-w-64 flex-1 rounded border border-gray-700 bg-gray-950 px-3 py-1.5 font-mono text-sm text-gray-100"
           >
           <button
             class="rounded-md bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-900 hover:bg-white"
@@ -156,7 +156,7 @@ async function runClone() {
         <div class="flex flex-wrap items-center gap-3">
           <select
             v-model="base64Mode"
-            class="rounded border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm"
+            class="rounded border border-gray-700 bg-gray-950 px-3 py-1.5 text-sm text-gray-100"
           >
             <option value="encode">
               encode
@@ -168,7 +168,7 @@ async function runClone() {
           <input
             v-model="base64Input"
             type="text"
-            class="min-w-64 flex-1 rounded border border-gray-700 bg-gray-950 px-3 py-1.5 font-mono text-sm"
+            class="min-w-64 flex-1 rounded border border-gray-700 bg-gray-950 px-3 py-1.5 font-mono text-sm text-gray-100"
           >
           <button
             class="rounded-md bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-900 hover:bg-white"
@@ -190,7 +190,7 @@ async function runClone() {
           <input
             v-model="cloneInput"
             type="text"
-            class="min-w-64 flex-1 rounded border border-gray-700 bg-gray-950 px-3 py-1.5 font-mono text-sm"
+            class="min-w-64 flex-1 rounded border border-gray-700 bg-gray-950 px-3 py-1.5 font-mono text-sm text-gray-100"
           >
           <label class="flex items-center gap-2 text-sm text-gray-300">
             <input v-model="forceNonCloneable" type="checkbox">

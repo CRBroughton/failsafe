@@ -8,7 +8,7 @@ const links = [
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-950 text-gray-200">
+  <div class="min-h-screen bg-gray-950 font-sans text-gray-200 antialiased">
     <header class="border-b border-gray-800">
       <nav class="mx-auto flex max-w-4xl items-center gap-6 px-6 py-4">
         <NuxtLink to="/" class="font-bold text-gray-50">

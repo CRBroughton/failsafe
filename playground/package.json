@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@unocss/nuxt": "^66.10.5",
+    "@unocss/reset": "^66.10.5",
     "typescript": "^5.7.2",
     "unocss": "^66.10.5",
     "vue-tsc": "^2.2.0"

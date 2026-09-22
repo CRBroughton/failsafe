@@ -59,7 +59,7 @@ async function runReadingTime() {
           <input
             v-model="slugInput"
             type="text"
-            class="min-w-64 flex-1 rounded border border-gray-700 bg-gray-950 px-3 py-1.5 font-mono text-sm"
+            class="min-w-64 flex-1 rounded border border-gray-700 bg-gray-950 px-3 py-1.5 font-mono text-sm text-gray-100"
           >
           <button
             class="rounded-md bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-900 hover:bg-white"
@@ -81,7 +81,7 @@ async function runReadingTime() {
           <textarea
             v-model="readingText"
             rows="3"
-            class="w-full rounded border border-gray-700 bg-gray-950 px-3 py-1.5 font-mono text-sm"
+            class="w-full rounded border border-gray-700 bg-gray-950 px-3 py-1.5 font-mono text-sm text-gray-100"
           />
           <button
             class="self-start rounded-md bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-900 hover:bg-white"
