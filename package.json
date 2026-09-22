@@ -22,6 +22,10 @@
     "./pipe": {
       "types": "./dist/pipe/index.d.mts",
       "import": "./dist/pipe/index.mjs"
+    },
+    "./gen": {
+      "types": "./dist/gen/index.d.mts",
+      "import": "./dist/gen/index.mjs"
     }
   },
   "main": "./dist/safe/index.mjs",

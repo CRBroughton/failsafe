@@ -5,6 +5,7 @@ export default defineBuildConfig({
     "src/safe/index",
     "src/try/index",
     "src/pipe/index",
+    "src/gen/index",
   ],
   declaration: true,
   clean: true,

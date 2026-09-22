@@ -1,4 +1,4 @@
-# @crbroughton/failsafe
+# FailSafe
 
 Type-safe error handling utilities for TypeScript. A `Result<T, E>` type
 (inspired by Rust) plus helpers for turning throwing browser/Node APIs into
@@ -43,6 +43,7 @@ const message = matchResult(result, {
 - `@crbroughton/failsafe`: the `Result` type, `Ok`/`Err`, guards, and matchers
 - `@crbroughton/failsafe/try`: `Result`-returning wrappers around throwing web/Node APIs
 - `@crbroughton/failsafe/pipe`: plain left-to-right function composition
+- `@crbroughton/failsafe/gen`: generator-based early-return error propagation
 
 ## `@crbroughton/failsafe`
 
@@ -199,6 +200,56 @@ const slug = pipe(
   s => s.replace(/\s+/g, "-"),
 )
 // 'hello-world'
+```
+
+## `@crbroughton/failsafe/gen`
+
+Early-return error propagation for `Result` — like Rust's `?` operator, via
+generators and `yield*`. Instead of manually checking `isErr` after every
+step, short-circuit with `yield* fail(...)` or `yield* unwrap(existingResult)`
+and let `gen()` collect the outcome into a `Result`.
+
+### `gen(block)`
+
+Runs a generator block and collects it into a `Result`. Overloaded on sync
+vs async: pass a `function*` and get `Result<T, E>` back directly; pass an
+`async function*` and get `Promise<Result<T, E>>`. There's no separate name
+for the async case — which overload applies follows from which kind of
+function you write.
+
+### `fail(error)`
+
+Short-circuits a `gen()` block with an error, via `yield* fail(...)`.
+
+### `unwrap(result)`
+
+Unwraps a `Result` inside a `gen()` block via `yield* unwrap(...)` — yields
+the error (short-circuiting) if `Err`, or resolves to the value if `Ok`.
+Always takes a plain, already-resolved `Result<T, E>`; for an async
+Result-returning call, await it at the call site: `yield* unwrap(await fetchUser(id))`.
+
+```ts
+import type { TaggedError } from "@crbroughton/failsafe"
+import { fail, gen, unwrap } from "@crbroughton/failsafe/gen"
+
+type EmptyFieldError = TaggedError<"EmptyFieldError", { field: string }>
+
+// Sync
+const slug = gen(function* () {
+  if (input.trim() === "") {
+    return yield * fail<EmptyFieldError>({ tag: "EmptyFieldError", field: "slug" })
+  }
+  return input.trim().toLowerCase()
+})
+// Result<string, EmptyFieldError>
+
+// Async — chaining multiple Result-returning calls
+const login = await gen(async function* () {
+  const { token, userId } = yield * unwrap(await postLogin(email, password))
+  const user = yield * unwrap(await fetchUserProfile(userId))
+  return { user, token }
+})
+// Result<{ user: UserProfile, token: string }, LoginError>
 ```
 
 ## Development
