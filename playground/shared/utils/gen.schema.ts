@@ -1,4 +1,4 @@
-import { resultSchema } from "#shared/utils/result.schema"
+import { clientErrorSchema, resultSchema } from "#shared/utils/result.schema"
 import { jsonParseErrorSchema, jsonStringifyErrorSchema } from "#shared/utils/try.schema"
 import { z } from "zod"
 
@@ -40,6 +40,17 @@ export const loginOkSchema = z.object({
 export const loginResponseSchema = resultSchema(loginOkSchema, loginErrorSchema)
 export type LoginResponse = z.infer<typeof loginResponseSchema>
 
+export const loginDisplayErrorSchema = z.discriminatedUnion("tag", [
+  clientErrorSchema,
+  invalidCredentialsSchema,
+  networkErrorSchema,
+  jsonStringifyErrorSchema,
+  jsonParseErrorSchema,
+])
+
+export const loginDisplaySchema = resultSchema(loginOkSchema, loginDisplayErrorSchema)
+export type LoginDisplay = z.infer<typeof loginDisplaySchema>
+
 export const validateSlugRequestSchema = z.object({
   input: z.string(),
 })
@@ -53,3 +64,11 @@ export type EmptyFieldError = z.infer<typeof emptyFieldErrorSchema>
 
 export const validateSlugResponseSchema = resultSchema(z.string(), emptyFieldErrorSchema)
 export type ValidateSlugResponse = z.infer<typeof validateSlugResponseSchema>
+
+export const validateSlugDisplayErrorSchema = z.discriminatedUnion("tag", [
+  clientErrorSchema,
+  emptyFieldErrorSchema,
+])
+
+export const validateSlugDisplaySchema = resultSchema(z.string(), validateSlugDisplayErrorSchema)
+export type ValidateSlugDisplay = z.infer<typeof validateSlugDisplaySchema>

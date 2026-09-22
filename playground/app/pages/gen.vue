@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import type { EmptyFieldError, LoginError, LoginRequest, LoginResponse, ValidateSlugRequest, ValidateSlugResponse } from "#shared/utils/gen.schema"
+import type { EmptyFieldError, LoginDisplay, LoginRequest, LoginResponse, ValidateSlugDisplay, ValidateSlugRequest, ValidateSlugResponse } from "#shared/utils/gen.schema"
 import type { ClientError } from "#shared/utils/result.schema"
 import { chain, match, matchResult, safe } from "@crbroughton/failsafe"
 import { gen, unwrap } from "@crbroughton/failsafe/gen"
-
-type LoginDisplay = { ok: true, value: Extract<LoginResponse, { ok: true }>["value"] } | { ok: false, error: ClientError | LoginError }
 
 const email = ref("craig@example.com")
 const password = ref("correct-password")
@@ -43,8 +41,6 @@ async function runLogin() {
   })
   loginLoading.value = false
 }
-
-type ValidateSlugDisplay = { ok: true, value: string } | { ok: false, error: ClientError | EmptyFieldError }
 
 const slugInput = ref("hello world")
 const slugResult = ref<ValidateSlugDisplay | null>(null)
