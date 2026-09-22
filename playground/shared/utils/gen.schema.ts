@@ -1,5 +1,5 @@
 import { resultSchema } from "#shared/utils/result.schema"
-import { jsonParseErrorSchema } from "#shared/utils/try.schema"
+import { jsonParseErrorSchema, jsonStringifyErrorSchema } from "#shared/utils/try.schema"
 import { z } from "zod"
 
 export const loginRequestSchema = z.object({
@@ -24,6 +24,7 @@ export type NetworkError = z.infer<typeof networkErrorSchema>
 export const loginErrorSchema = z.discriminatedUnion("tag", [
   invalidCredentialsSchema,
   networkErrorSchema,
+  jsonStringifyErrorSchema,
   jsonParseErrorSchema,
 ])
 export type LoginError = z.infer<typeof loginErrorSchema>

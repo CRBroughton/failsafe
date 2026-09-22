@@ -1,11 +1,12 @@
 import type { EmptyFieldError, ValidateSlugResponse } from "#shared/utils/gen.schema"
+import type { Result } from "@crbroughton/failsafe"
 import { validateSlugRequestSchema, validateSlugResponseSchema } from "#shared/utils/gen.schema"
 import { fail, gen } from "@crbroughton/failsafe/gen"
 
 export default defineEventHandler(async (event): Promise<ValidateSlugResponse> => {
   const { input } = await readValidatedBody(event, validateSlugRequestSchema.parse)
 
-  const result = gen(function* () {
+  const result: Result<string, EmptyFieldError> = gen(function* () {
     if (input.trim() === "") {
       return yield * fail<EmptyFieldError>({ tag: "EmptyFieldError", field: "slug" })
     }

@@ -15,6 +15,11 @@ export type JSONParseError = z.infer<typeof jsonParseErrorSchema>
 export const parseJsonResponseSchema = resultSchema(z.unknown(), jsonParseErrorSchema)
 export type ParseJsonResponse = z.infer<typeof parseJsonResponseSchema>
 
+export const jsonStringifyErrorSchema = z.object({
+  tag: z.literal("JSONStringifyError"),
+})
+export type JSONStringifyError = z.infer<typeof jsonStringifyErrorSchema>
+
 export const parseUrlRequestSchema = z.object({
   input: z.string(),
   base: z.string().optional(),

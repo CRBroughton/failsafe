@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { LoginRequest, LoginResponse, ValidateSlugRequest, ValidateSlugResponse } from "#shared/utils/gen.schema"
 import type { ClientError } from "#shared/utils/result.schema"
-import { matchResult, safe } from "@crbroughton/failsafe"
+import { match, matchResult, safe } from "@crbroughton/failsafe"
 
 type LoginDisplay = LoginResponse | { ok: false, error: ClientError }
 
@@ -16,7 +16,24 @@ async function runLogin() {
 
   const result = await safe($fetch<LoginResponse>("/api/gen/login", { method: "POST", body }))
   loginResult.value = matchResult(result, {
-    ok: (value): LoginDisplay => value,
+    // result succeeded at the network layer — loginResponse is itself a
+    // Result, so match it too. Its err branch is the real tagged union
+    // (InvalidCredentials | NetworkError | JSONStringifyError |
+    // JSONParseError), which is what match() actually needs.
+    ok: (loginResponse): LoginDisplay => matchResult(loginResponse, {
+      ok: value => ({ ok: true, value }),
+      err: (error): LoginDisplay => {
+        match(error, {
+          InvalidCredentials: e => console.warn("invalid credentials:", e.email),
+          NetworkError: e => console.warn("upstream failed:", e.status),
+          JSONStringifyError: () => console.warn("could not serialize profile"),
+          JSONParseError: e => console.warn("could not parse profile:", e.raw),
+        })
+        return { ok: false, error }
+      },
+    }),
+    // the fetch itself failed — this Error has no tag, so match() can't
+    // run on it; it never reached the endpoint's own Result at all.
     err: (error): LoginDisplay => ({ ok: false, error: { tag: "FetchError", message: error.message } }),
   })
   loginLoading.value = false

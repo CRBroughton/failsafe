@@ -1,9 +1,9 @@
 import type { InvalidCredentials, LoginResponse, NetworkError } from "#shared/utils/gen.schema"
-import type { JSONParseError } from "#shared/utils/try.schema"
+import type { JSONParseError, JSONStringifyError } from "#shared/utils/try.schema"
 import type { Result } from "@crbroughton/failsafe"
 import { loginRequestSchema, loginResponseSchema } from "#shared/utils/gen.schema"
 import { fail, gen, unwrap } from "@crbroughton/failsafe/gen"
-import { tryJSONParse } from "@crbroughton/failsafe/try"
+import { tryJSONParse, tryJSONStringify } from "@crbroughton/failsafe/try"
 
 interface LoginStep { token: string, userId: string }
 interface UserProfile { userId: string, name: string }
@@ -27,7 +27,7 @@ function postLogin(
 
 function fetchUserProfile(
   userId: string,
-): Promise<Result<UserProfile, NetworkError | JSONParseError>> {
+): Promise<Result<UserProfile, NetworkError | JSONStringifyError | JSONParseError>> {
   return gen(async function* () {
     if (userId !== "user_1") {
       return yield * fail<NetworkError>({
@@ -36,7 +36,8 @@ function fetchUserProfile(
         status: 404,
       })
     }
-    const raw = await delay(JSON.stringify({ userId: "user_1", name: "Craig" }), 200)
+    const stringified = yield * unwrap(tryJSONStringify({ userId: "user_1", name: "Craig" }))
+    const raw = await delay(stringified, 200)
     return yield * unwrap(tryJSONParse<UserProfile>(raw))
   })
 }
