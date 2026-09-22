@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import type { LoginRequest, LoginResponse, ValidateSlugRequest, ValidateSlugResponse } from "#shared/utils/gen.schema"
+import type { EmptyFieldError, LoginRequest, LoginResponse, ValidateSlugRequest, ValidateSlugResponse } from "#shared/utils/gen.schema"
 import type { ClientError } from "#shared/utils/result.schema"
-import { match, matchResult, safe } from "@crbroughton/failsafe"
+import { chain, match, matchResult, safe } from "@crbroughton/failsafe"
+import { gen, unwrap } from "@crbroughton/failsafe/gen"
 
 type LoginDisplay = LoginResponse | { ok: false, error: ClientError }
 
@@ -14,15 +15,21 @@ async function runLogin() {
   loginLoading.value = true
   const body: LoginRequest = { email: email.value, password: password.value }
 
-  const result = await safe($fetch<LoginResponse>("/api/gen/login", { method: "POST", body }))
+  // Two Result-producing steps, chained with gen(): the network fetch
+  // (safe(), error is a plain untagged Error) and the endpoint's own
+  // LoginResponse (error is the real tagged union). unwrap() flattens
+  // both into a single Result instead of nesting one inside the other.
+  const result = await gen(async function* () {
+    const loginResponse = yield* unwrap(await safe($fetch<LoginResponse>("/api/gen/login", { method: "POST", body })))
+    return yield* unwrap(loginResponse)
+  })
+
   loginResult.value = matchResult(result, {
-    // result succeeded at the network layer — loginResponse is itself a
-    // Result, so match it too. Its err branch is the real tagged union
-    // (InvalidCredentials | NetworkError | JSONStringifyError |
-    // JSONParseError), which is what match() actually needs.
-    ok: (loginResponse): LoginDisplay => matchResult(loginResponse, {
-      ok: value => ({ ok: true, value }),
-      err: (error): LoginDisplay => {
+    ok: (value): LoginDisplay => ({ ok: true, value }),
+    err: (error): LoginDisplay => {
+      // error is Error | LoginError — only the LoginError branch has a
+      // tag, so match() needs that narrowed first.
+      if ("tag" in error) {
         match(error, {
           InvalidCredentials: e => console.warn("invalid credentials:", e.email),
           NetworkError: e => console.warn("upstream failed:", e.status),
@@ -30,16 +37,14 @@ async function runLogin() {
           JSONParseError: e => console.warn("could not parse profile:", e.raw),
         })
         return { ok: false, error }
-      },
-    }),
-    // the fetch itself failed — this Error has no tag, so match() can't
-    // run on it; it never reached the endpoint's own Result at all.
-    err: (error): LoginDisplay => ({ ok: false, error: { tag: "FetchError", message: error.message } }),
+      }
+      return { ok: false, error: { tag: "FetchError", message: error.message } }
+    },
   })
   loginLoading.value = false
 }
 
-type ValidateSlugDisplay = ValidateSlugResponse | { ok: false, error: ClientError }
+type ValidateSlugDisplay = { ok: true, value: string } | { ok: false, error: ClientError | EmptyFieldError }
 
 const slugInput = ref("hello world")
 const slugResult = ref<ValidateSlugDisplay | null>(null)
@@ -49,10 +54,28 @@ async function runValidateSlug() {
   slugLoading.value = true
   const body: ValidateSlugRequest = { input: slugInput.value }
 
-  const result = await safe($fetch<ValidateSlugResponse>("/api/gen/validate-slug", { method: "POST", body }))
+  // safe()'s mapError is typed wide enough to cover the endpoint's own
+  // error too, purely so chain() can flatten Result<ValidateSlugResponse,
+  // ClientError> into a single Result<string, ClientError | EmptyFieldError>
+  // in one step — no nested Result, one matchResult + one match().
+  const fetched = await safe(
+    $fetch<ValidateSlugResponse>("/api/gen/validate-slug", { method: "POST", body }),
+    (e): ClientError | EmptyFieldError => ({
+      tag: "FetchError",
+      message: e instanceof Error ? e.message : "Request failed",
+    }),
+  )
+  const result = chain(fetched, validateSlugResponse => validateSlugResponse)
+
   slugResult.value = matchResult(result, {
-    ok: (value): ValidateSlugDisplay => value,
-    err: (error): ValidateSlugDisplay => ({ ok: false, error: { tag: "FetchError", message: error.message } }),
+    ok: (value): ValidateSlugDisplay => ({ ok: true, value }),
+    err: (error): ValidateSlugDisplay => {
+      match(error, {
+        FetchError: e => console.warn("fetch failed:", e.message),
+        EmptyFieldError: e => console.warn("empty field:", e.field),
+      })
+      return { ok: false, error }
+    },
   })
   slugLoading.value = false
 }
