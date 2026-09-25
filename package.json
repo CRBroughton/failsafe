@@ -1,61 +1,26 @@
 {
-  "name": "@crbroughton/failsafe",
+  "name": "failsafe-monorepo",
   "type": "module",
-  "version": "0.3.0",
+  "private": true,
   "packageManager": "pnpm@9.15.0",
-  "description": "Type-safe error handling utilities for TypeScript",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/CRBroughton/failsafe.git"
-  },
-  "sideEffects": false,
-  "exports": {
-    ".": {
-      "types": "./dist/safe/index.d.mts",
-      "import": "./dist/safe/index.mjs"
-    },
-    "./try": {
-      "types": "./dist/try/index.d.mts",
-      "import": "./dist/try/index.mjs"
-    },
-    "./pipe": {
-      "types": "./dist/pipe/index.d.mts",
-      "import": "./dist/pipe/index.mjs"
-    },
-    "./gen": {
-      "types": "./dist/gen/index.d.mts",
-      "import": "./dist/gen/index.mjs"
-    }
-  },
-  "main": "./dist/safe/index.mjs",
-  "types": "./dist/safe/index.d.mts",
-  "files": [
-    "dist"
-  ],
   "engines": {
     "node": ">=24"
   },
   "scripts": {
-    "build": "unbuild",
-    "test": "vitest run --coverage",
-    "test:watch": "vitest",
+    "build": "nx run-many -t build",
+    "test": "nx run-many -t test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "nx run-many -t typecheck",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "pnpm build && changeset publish"
+    "release": "nx run @crbroughton/failsafe:build && changeset publish"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^3.9.2",
     "@changesets/cli": "^3.0.3",
-    "@vitest/coverage-v8": "^2.1.8",
     "eslint": "^9.17.0",
-    "happy-dom": "^15.11.7",
     "nx": "^20.3.0",
-    "typescript": "^5.7.2",
-    "unbuild": "^3.0.1",
-    "vitest": "^2.1.8"
+    "typescript": "^5.7.2"
   }
 }

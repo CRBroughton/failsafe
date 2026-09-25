@@ -1,0 +1,54 @@
+{
+  "name": "@crbroughton/failsafe",
+  "type": "module",
+  "version": "0.3.0",
+  "packageManager": "pnpm@9.15.0",
+  "description": "Type-safe error handling utilities for TypeScript",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CRBroughton/failsafe.git",
+    "directory": "packages/failsafe"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/safe/index.d.mts",
+      "import": "./dist/safe/index.mjs"
+    },
+    "./try": {
+      "types": "./dist/try/index.d.mts",
+      "import": "./dist/try/index.mjs"
+    },
+    "./pipe": {
+      "types": "./dist/pipe/index.d.mts",
+      "import": "./dist/pipe/index.mjs"
+    },
+    "./gen": {
+      "types": "./dist/gen/index.d.mts",
+      "import": "./dist/gen/index.mjs"
+    }
+  },
+  "main": "./dist/safe/index.mjs",
+  "types": "./dist/safe/index.d.mts",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "unbuild",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint-plugin-failsafe": "workspace:*",
+    "happy-dom": "^15.11.7",
+    "typescript": "^5.7.2",
+    "unbuild": "^3.0.1",
+    "vitest": "^2.1.8"
+  }
+}

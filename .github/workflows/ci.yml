@@ -34,7 +34,7 @@ jobs:
         run: devenv shell -- pnpm install --frozen-lockfile
 
       - name: Lint
-        run: devenv shell -- pnpm exec nx run failsafe:lint
+        run: devenv shell -- pnpm exec nx run-many -t lint
 
   typecheck:
     runs-on: ubuntu-latest
@@ -64,7 +64,7 @@ jobs:
         run: devenv shell -- pnpm install --frozen-lockfile
 
       - name: Typecheck
-        run: devenv shell -- pnpm exec nx run failsafe:typecheck
+        run: devenv shell -- pnpm exec nx run-many -t typecheck
 
   test:
     runs-on: ubuntu-latest
@@ -94,7 +94,7 @@ jobs:
         run: devenv shell -- pnpm install --frozen-lockfile
 
       - name: Test
-        run: devenv shell -- pnpm exec nx run failsafe:test
+        run: devenv shell -- pnpm exec nx run-many -t test
 
   build:
     runs-on: ubuntu-latest
@@ -125,4 +125,4 @@ jobs:
         run: devenv shell -- pnpm install --frozen-lockfile
 
       - name: Build
-        run: devenv shell -- pnpm exec nx run failsafe:build
+        run: devenv shell -- pnpm exec nx run-many -t build

@@ -3,17 +3,21 @@
   "targetDefaults": {
     "build": {
       "cache": true,
+      "dependsOn": ["^build"],
       "outputs": ["{projectRoot}/dist"]
     },
     "test": {
       "cache": true,
+      "dependsOn": ["^build"],
       "outputs": ["{projectRoot}/coverage"]
     },
     "lint": {
-      "cache": true
+      "cache": true,
+      "dependsOn": ["^build"]
     },
     "typecheck": {
-      "cache": true
+      "cache": true,
+      "dependsOn": ["^build"]
     }
   }
 }
