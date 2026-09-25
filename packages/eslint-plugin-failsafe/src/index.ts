@@ -1,4 +1,6 @@
+import { noAsyncThunkInSafe } from "./rules/no-async-thunk-in-safe"
 import { noRawThrowingCall } from "./rules/no-raw-throwing-call"
+import { noThrowInGenBlock } from "./rules/no-throw-in-gen-block"
 import { noUnusedResult } from "./rules/no-unused-result"
 import { requireMatchOnTaggedError } from "./rules/require-match-on-tagged-error"
 
@@ -6,6 +8,8 @@ const rules = {
   "no-raw-throwing-call": noRawThrowingCall,
   "require-match-on-tagged-error": requireMatchOnTaggedError,
   "no-unused-result": noUnusedResult,
+  "no-async-thunk-in-safe": noAsyncThunkInSafe,
+  "no-throw-in-gen-block": noThrowInGenBlock,
 }
 
 // Rules that call ESLintUtils.getParserServices(context) — they throw if
