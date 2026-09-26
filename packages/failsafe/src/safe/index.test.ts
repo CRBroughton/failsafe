@@ -1,6 +1,6 @@
 import type { Result } from "./index"
 import { describe, expect, it } from "vitest"
-import { chain, collect, Err, err, isErr, isOk, match, matchResult, Ok, ok, safe } from "./index"
+import { chain, collect, Err, err, isErr, isOk, match, matchResult, Ok, ok, partition, safe } from "./index"
 
 describe("ok / Err", () => {
   it("creates a successful result", () => {
@@ -83,6 +83,33 @@ describe("collect", () => {
     })
     const result = collect(results)
     expect(result).toEqual({ ok: false, error: [{ tag: "NaNError", raw: "not-a-number" }] })
+  })
+})
+
+describe("partition", () => {
+  it("splits a mixed batch into both buckets, never failing itself", () => {
+    const results = [Ok(1), Err("bad-1"), Ok(2), Err("bad-2"), Ok(3)]
+    const { oks, errs } = partition(results)
+    expect(oks).toEqual([1, 2, 3])
+    expect(errs).toEqual(["bad-1", "bad-2"])
+  })
+
+  it("returns all oks and no errs when everything succeeds", () => {
+    const { oks, errs } = partition([Ok(1), Ok(2)])
+    expect(oks).toEqual([1, 2])
+    expect(errs).toEqual([])
+  })
+
+  it("returns all errs and no oks when everything fails", () => {
+    const { oks, errs } = partition([Err("a"), Err("b")])
+    expect(oks).toEqual([])
+    expect(errs).toEqual(["a", "b"])
+  })
+
+  it("returns two empty buckets for an empty array", () => {
+    const { oks, errs } = partition([])
+    expect(oks).toEqual([])
+    expect(errs).toEqual([])
   })
 })
 

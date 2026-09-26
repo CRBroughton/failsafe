@@ -141,6 +141,23 @@ if (isErr(results)) {
 const [email, password, age] = results.value // a real tuple
 ```
 
+### `partition(results)`
+
+Splits a batch of `Result`s into every `Ok` value and every `Err` error,
+without ever failing itself — unlike `collect()`, which treats any single
+`Err` as a failure of the whole batch, `partition()` always returns both
+buckets. Use `collect()` when the batch only counts if every entry
+succeeds; use `partition()` when successes shouldn't be held hostage by
+failures (CSV imports, bulk API calls, migration scripts).
+
+```ts
+const results = csvRows.map((row, i) => parseRow(i + 1, row))
+const { oks, errs } = partition(results)
+
+console.log(`imported ${oks.length} contacts, ${errs.length} rows failed`)
+// the successful rows go through even if others failed
+```
+
 ### `TaggedError<Tag, Extra?>`
 
 A discriminated error shape: every error carries a `tag` so consumers can

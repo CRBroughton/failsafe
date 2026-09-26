@@ -356,6 +356,42 @@ export function collect(results: readonly Result<any, any>[]): any {
 }
 
 /**
+ * Splits a batch of Results into every Ok value and every Err error,
+ * without ever failing itself — unlike collect(), which treats any
+ * single Err as a failure of the whole batch, partition() always
+ * returns both buckets. Use collect() when the batch only counts if
+ * every entry succeeds (form validation, building one combined config);
+ * use partition() when successes shouldn't be held hostage by failures
+ * (CSV imports, bulk API calls, migration scripts).
+ *
+ * @template T The success type
+ * @template E The error type
+ * @param results The Results to split
+ * @returns Every Ok value and every Err error, collected separately
+ *
+ * @example
+ * ```ts
+ * const results = csvRows.map((row, i) => parseRow(i + 1, row))
+ * const { oks, errs } = partition(results)
+ * console.log(`imported ${oks.length} contacts, ${errs.length} rows failed`)
+ * // the successful rows go through even if others failed
+ * ```
+ */
+export function partition<T, E>(results: readonly Result<T, E>[]): { oks: T[], errs: E[] } {
+  const oks: T[] = []
+  const errs: E[] = []
+  for (const r of results) {
+    if (isErr(r)) {
+      errs.push(r.error)
+    }
+    else {
+      oks.push(r.value)
+    }
+  }
+  return { oks, errs }
+}
+
+/**
  * A discriminated error shape — every error carries a `tag` so consumers
  * can narrow on it (if/switch, or match for exhaustive handling).
  *
