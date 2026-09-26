@@ -2,7 +2,7 @@ import type { TSESTree } from "@typescript-eslint/utils"
 import { ESLintUtils } from "@typescript-eslint/utils"
 
 const createRule = ESLintUtils.RuleCreator(
-  name => `https://github.com/CRBroughton/failsafe/blob/master/eslint-plugin-failsafe/docs/rules/${name}.md`,
+  name => `https://github.com/CRBroughton/failsafe/blob/master/packages/eslint-plugin-failsafe/docs/rules/${name}.md`,
 )
 
 type MessageId = "noThrow"

@@ -3,7 +3,7 @@ import type * as ts from "typescript"
 import { ESLintUtils } from "@typescript-eslint/utils"
 
 const createRule = ESLintUtils.RuleCreator(
-  name => `https://github.com/CRBroughton/failsafe/blob/master/eslint-plugin-failsafe/docs/rules/${name}.md`,
+  name => `https://github.com/CRBroughton/failsafe/blob/master/packages/eslint-plugin-failsafe/docs/rules/${name}.md`,
 )
 
 type MessageId = "unusedResult"
