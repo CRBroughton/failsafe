@@ -118,6 +118,29 @@ const result = chain(tryLocalStorageGet("user"), raw =>
   raw === null ? Err({ tag: "ParseError", raw: "" }) : tryJSONParse<User>(raw))
 ```
 
+### `collect(results)`
+
+Runs every `Result` and collects them, `Promise.all`-style — unlike
+`chain()`, which short-circuits on the first `Err`, `collect()` reports
+every failure at once. Pass a literal array and each position keeps its
+own `T`/`E` (a real tuple back, not a widened array); pass a
+runtime-built homogeneous array (e.g. from `.map()`) and it collects into
+`Result<T[], E[]>` instead.
+
+```ts
+const results = collect([
+  validateEmail(form.email),
+  validatePassword(form.password),
+  validateAge(form.age),
+])
+// Result<[string, string, number], (InvalidEmailError | TooShortError | TooYoungError)[]>
+
+if (isErr(results)) {
+  return results // every field's error, not just the first
+}
+const [email, password, age] = results.value // a real tuple
+```
+
 ### `TaggedError<Tag, Extra?>`
 
 A discriminated error shape: every error carries a `tag` so consumers can

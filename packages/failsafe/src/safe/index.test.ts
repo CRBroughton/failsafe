@@ -1,5 +1,6 @@
+import type { Result } from "./index"
 import { describe, expect, it } from "vitest"
-import { chain, Err, err, isErr, isOk, match, matchResult, Ok, ok, safe } from "./index"
+import { chain, collect, Err, err, isErr, isOk, match, matchResult, Ok, ok, safe } from "./index"
 
 describe("ok / Err", () => {
   it("creates a successful result", () => {
@@ -47,6 +48,41 @@ describe("chain", () => {
     const original = Err("boom")
     const result = chain(original, () => Ok(1))
     expect(result).toBe(original)
+  })
+})
+
+describe("collect", () => {
+  it("collects every value when all are Ok (tuple form)", () => {
+    const result = collect([Ok("a"), Ok(1), Ok(true)])
+    expect(result).toEqual({ ok: true, value: ["a", 1, true] })
+  })
+
+  it("collects every error when any are Err, not just the first", () => {
+    const result = collect([
+      Err({ tag: "A" as const }),
+      Ok(1),
+      Err({ tag: "B" as const }),
+    ])
+    expect(result).toEqual({
+      ok: false,
+      error: [{ tag: "A" }, { tag: "B" }],
+    })
+  })
+
+  it("returns Ok([]) for an empty array", () => {
+    const result = collect([])
+    expect(result).toEqual({ ok: true, value: [] })
+  })
+
+  it("works with a homogeneous array built at runtime", () => {
+    interface NaNError { tag: "NaNError", raw: string }
+    const inputs = ["1", "2", "not-a-number", "4"]
+    const results: Result<number, NaNError>[] = inputs.map((raw) => {
+      const parsed = Number(raw)
+      return Number.isNaN(parsed) ? Err({ tag: "NaNError", raw }) : Ok(parsed)
+    })
+    const result = collect(results)
+    expect(result).toEqual({ ok: false, error: [{ tag: "NaNError", raw: "not-a-number" }] })
   })
 })
 

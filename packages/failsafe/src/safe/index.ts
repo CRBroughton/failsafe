@@ -301,6 +301,60 @@ export function chain<T, U, E>(
   return isOk(result) ? fn(result.value) : result
 }
 
+type ResultsTuple = readonly Result<any, any>[]
+
+// Checked against Err's own discriminant shape directly, never through
+// the combined Result<T, E> alias: `R extends Result<any, infer E>`
+// silently collapses the inferred error type to `unknown` when R is
+// itself a union (as every Result is), since the infer site sits inside
+// a union on the right of `extends` and distribution doesn't bind it the
+// way matching the raw `{ ok: false, error: infer E }` shape does.
+type OkOf<R> = R extends { ok: true, value: infer T } ? T : never
+type ErrOf<R> = R extends { ok: false, error: infer E } ? E : never
+type OkTuple<Rs extends ResultsTuple> = { [K in keyof Rs]: OkOf<Rs[K]> }
+type ErrTuple<Rs extends ResultsTuple> = { [K in keyof Rs]: ErrOf<Rs[K]> }
+type ErrUnion<Rs extends ResultsTuple> = ErrTuple<Rs>[number]
+
+/**
+ * Runs every Result and collects them, Promise.all-style — unlike chain(),
+ * which short-circuits on the first Err, collect() reports every failure
+ * at once.
+ *
+ * Two overloads: a tuple form (each position keeps its own T/E, so a
+ * literal array literal infers a real tuple, not a widened array) and a
+ * homogeneous-array fallback for arrays built at runtime (e.g. via .map()).
+ *
+ * @param results The Results to collect
+ * @returns Ok(tuple/array of every value) if all were Ok, otherwise
+ *   Err(array of every error) — not just the first one
+ *
+ * @example
+ * ```ts
+ * const results = collect([
+ *   validateEmail(form.email),
+ *   validatePassword(form.password),
+ *   validateAge(form.age),
+ * ])
+ * // Result<[string, string, number], (InvalidEmailError | TooShortError | TooYoungError)[]>
+ *
+ * if (isErr(results)) {
+ *   return results // every field's error, not just the first
+ * }
+ * const [email, password, age] = results.value // a real tuple
+ * ```
+ */
+export function collect<Rs extends ResultsTuple>(
+  results: readonly [...Rs]
+): Result<OkTuple<Rs>, ErrUnion<Rs>[]>
+export function collect<T, E>(results: readonly Result<T, E>[]): Result<T[], E[]>
+export function collect(results: readonly Result<any, any>[]): any {
+  const errors = results.filter(isErr).map((r): unknown => r.error)
+  if (errors.length > 0) {
+    return Err(errors)
+  }
+  return Ok(results.map((r): unknown => (r as Ok<any>).value))
+}
+
 /**
  * A discriminated error shape — every error carries a `tag` so consumers
  * can narrow on it (if/switch, or match for exhaustive handling).
