@@ -10,7 +10,7 @@
     };
   };
 
-  packages = [ pkgs.git ];
+  packages = [ pkgs.git pkgs.just ];
 
   enterShell = ''
     echo "failsafe devenv: node $(node --version), pnpm $(pnpm --version)"

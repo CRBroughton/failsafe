@@ -1,5 +1,5 @@
 import antfu from "@antfu/eslint-config"
-import failsafe from "eslint-plugin-failsafe"
+import failsafe from "@crbroughton/eslint-plugin-failsafe"
 
 export default antfu(
   {

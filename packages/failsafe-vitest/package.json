@@ -2,8 +2,13 @@
   "name": "@crbroughton/failsafe-vitest",
   "type": "module",
   "version": "0.1.0",
-  "private": true,
   "description": "Custom vitest matchers for @crbroughton/failsafe's Result type",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CRBroughton/failsafe.git",
+    "directory": "packages/failsafe-vitest"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",
@@ -12,6 +17,9 @@
   },
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "unbuild",
     "test": "vitest run",

@@ -36,11 +36,10 @@ jobs:
         run: devenv shell -- pnpm install --frozen-lockfile
 
       - name: Test
-        run: devenv shell -- pnpm exec nx run @crbroughton/failsafe:test
+        run: devenv shell -- pnpm exec nx run-many -t test
 
       - name: Build
-        run: devenv shell -- pnpm exec nx run @crbroughton/failsafe:build
+        run: devenv shell -- pnpm exec nx run-many -t build
 
       - name: Publish to npm
-        working-directory: packages/failsafe
-        run: devenv shell -- npm publish --access public
+        run: devenv shell -- pnpm exec changeset publish

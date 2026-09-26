@@ -44,8 +44,8 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@crbroughton/eslint-plugin-failsafe": "workspace:*",
     "@vitest/coverage-v8": "^2.1.8",
-    "eslint-plugin-failsafe": "workspace:*",
     "happy-dom": "^15.11.7",
     "typescript": "^5.7.2",
     "unbuild": "^3.0.1",
