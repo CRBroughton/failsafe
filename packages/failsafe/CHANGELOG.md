@@ -1,5 +1,22 @@
 # @crbroughton/failsafe
 
+## 0.4.0
+
+### Minor Changes
+
+- e58b347: Add `collect(results)`: runs every `Result` and collects them,
+  `Promise.all`-style — unlike `chain()`, which short-circuits on the first
+  `Err`, `collect()` reports every failure at once. A literal array of
+  `Result`s infers a real tuple (each position keeps its own `T`/`E`); a
+  homogeneous array built at runtime (e.g. via `.map()`) collects into
+  `Result<T[], E[]>` instead.
+- 941654c: Add `partition(results)`: splits a batch of `Result`s into every `Ok`
+  value and every `Err` error, without ever failing itself. Unlike
+  `collect()`, which treats any single `Err` as a failure of the whole
+  batch, `partition()` always returns both buckets — for batch-processing
+  use cases (CSV imports, bulk API calls, migration scripts) where
+  successful entries shouldn't be discarded just because others failed.
+
 ## 0.3.0
 
 ### Minor Changes
