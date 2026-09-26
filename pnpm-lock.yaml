@@ -104,6 +104,24 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@26.6.2)(happy-dom@15.11.7)(lightningcss@1.33.0)(terser@5.51.2)
 
+  packages/failsafe-vitest:
+    devDependencies:
+      '@crbroughton/failsafe':
+        specifier: workspace:*
+        version: link:../failsafe
+      '@vitest/expect':
+        specifier: ^2.1.8
+        version: 2.1.9
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      unbuild:
+        specifier: ^3.0.1
+        version: 3.6.1(typescript@5.9.3)(vue-tsc@2.2.12(typescript@5.9.3))(vue@3.5.43(typescript@5.9.3))
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@26.6.2)(happy-dom@15.11.7)(lightningcss@1.33.0)(terser@5.51.2)
+
 packages:
 
   '@ampproject/remapping@2.3.0':

@@ -1,0 +1,32 @@
+{
+  "name": "@crbroughton/failsafe-vitest",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Custom vitest matchers for @crbroughton/failsafe's Result type",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "scripts": {
+    "build": "unbuild",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@crbroughton/failsafe": "workspace:*",
+    "vitest": "^2.0.0"
+  },
+  "devDependencies": {
+    "@crbroughton/failsafe": "workspace:*",
+    "@vitest/expect": "^2.1.8",
+    "typescript": "^5.7.2",
+    "unbuild": "^3.0.1",
+    "vitest": "^2.1.8"
+  }
+}
