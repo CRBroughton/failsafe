@@ -14,5 +14,11 @@
 
   enterShell = ''
     echo "failsafe devenv: node $(node --version), pnpm $(pnpm --version)"
+    if [ ! -d node_modules ]; then
+      echo "node_modules missing, running pnpm install..."
+      pnpm install
+      echo "building packages..."
+      pnpm -r build
+    fi
   '';
 }
