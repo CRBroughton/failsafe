@@ -91,6 +91,9 @@ importers:
       '@crbroughton/eslint-plugin-failsafe':
         specifier: workspace:*
         version: link:../eslint-plugin-failsafe
+      '@crbroughton/ts-test-utils':
+        specifier: ^0.7.0
+        version: 0.7.0(typescript@5.9.3)
       '@vitest/coverage-v8':
         specifier: ^2.1.8
         version: 2.1.9(vitest@2.1.9(@types/node@26.6.2)(happy-dom@15.11.7)(lightningcss@1.33.0)(terser@5.51.2))
@@ -410,6 +413,11 @@ packages:
 
   '@colordx/core@5.8.0':
     resolution: {integrity: sha512-cG0QJAO6VkaRUlIb0zOzX9gfJgs1pjoOL9gZ/PK1kfvBs0GCkADu5oQh6gPxXgQnZ3gV575h+lQRC0NlMDTclA==}
+
+  '@crbroughton/ts-test-utils@0.7.0':
+    resolution: {integrity: sha512-GBZkncYio2KxtGEtw9l3MuUnEkEPPLyIdzw+wFLKoSWgIODih6tGlr/62GTndmWYU5OvJt7IyB+BWLHbIa+XPQ==}
+    peerDependencies:
+      typescript: 5.4.5
 
   '@dxup/nuxt@0.5.10':
     resolution: {integrity: sha512-54Vehb7LmR7qYpC6KFwjDTSm6CB1CayBu+JXdHrPLrIjjr5xAgb43jvgOU+mnB+tsRh414fSsEy0QjBMKILQ8g==}
@@ -6601,6 +6609,10 @@ snapshots:
   '@cloudflare/kv-asset-handler@0.4.2': {}
 
   '@colordx/core@5.8.0': {}
+
+  '@crbroughton/ts-test-utils@0.7.0(typescript@5.9.3)':
+    dependencies:
+      typescript: 5.9.3
 
   '@dxup/nuxt@0.5.10(esbuild@0.28.2)(magicast@0.5.5)(oxc-parser@0.150.0)(rolldown@1.2.9)(rollup@4.63.4)(vite@8.3.0(@types/node@26.6.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1))(webpack@5.111.1(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))':
     dependencies:
