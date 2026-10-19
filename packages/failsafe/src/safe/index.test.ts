@@ -180,8 +180,15 @@ describe("match", () => {
     | { tag: "ParseError", raw: string }
     | { tag: "StorageError", key: string }
 
+  // returning through a function call (rather than a local literal-initialized
+  // const) keeps TestError as the full union instead of TypeScript narrowing
+  // it down to whichever single tag the literal happens to use
+  function makeError(): TestError {
+    return { tag: "ParseError", raw: "abc" }
+  }
+
   it("dispatches to the matching tag handler", () => {
-    const parseError: TestError = { tag: "ParseError", raw: "abc" }
+    const parseError = makeError()
     const message = match(parseError, {
       ParseError: (e: Extract<TestError, { tag: "ParseError" }>) => `bad json: ${e.raw}`,
       StorageError: (e: Extract<TestError, { tag: "StorageError" }>) => `storage failed: ${e.key}`,

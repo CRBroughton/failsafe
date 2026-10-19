@@ -1,5 +1,11 @@
 # @crbroughton/failsafe
 
+## 0.4.1
+
+### Patch Changes
+
+- ensure only valid match cases on union can be caught, not invalid strings
+
 ## 0.4.0
 
 ### Minor Changes

@@ -13,7 +13,7 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "nx run-many -t typecheck",
     "changeset": "changeset",
-    "version": "changeset version",
+    "changeset:version": "changeset version",
     "release": "nx run-many -t build && changeset publish"
   },
   "devDependencies": {

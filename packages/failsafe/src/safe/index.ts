@@ -458,7 +458,8 @@ export function matchResult<T, E, R>(
 export function match<
   E extends { tag: string },
   Handlers extends { [K in E["tag"]]: (error: Extract<E, { tag: K }>) => unknown },
->(error: E, handlers: Handlers): ReturnType<Handlers[E["tag"]]> {
-  // eslint-disable-next-line ts/no-unsafe-argument -- runtime property lookup can't be statically proven to match Extract<E, { tag: K }>; exhaustiveness is guaranteed by Handlers' mapped type, not this cast
-  return handlers[error.tag as E["tag"]](error as any) as ReturnType<Handlers[E["tag"]]>
+>(error: E, handlers: Handlers & Record<Exclude<keyof Handlers, E["tag"]>, never>): ReturnType<Handlers[E["tag"]]>
+// implementation signature intentionally loose; the exported overload above enforces exactness (no extra tags) at call sites
+export function match(error: { tag: string }, handlers: Record<string, (error: any) => unknown>): unknown {
+  return handlers[error.tag]!(error)
 }
