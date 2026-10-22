@@ -16,16 +16,17 @@ pnpm add @crbroughton/failsafe
 ## Quick start
 
 ```ts
-import { chain, isOk, match, matchResult, type TaggedError } from "@crbroughton/failsafe"
+import { chain, isOk, match, matchOption, matchResult, type TaggedError } from "@crbroughton/failsafe"
 import { tryJSONParse, tryLocalStorageGet } from "@crbroughton/failsafe/try"
 
 interface User { name: string }
 
 const result = chain(
   tryLocalStorageGet("user"),
-  raw => raw === null
-    ? { ok: false as const, error: { tag: "JSONParseError" as const, raw: "" } }
-    : tryJSONParse<User>(raw),
+  raw => matchOption(raw, {
+    some: value => tryJSONParse<User>(value),
+    none: () => ({ ok: false as const, error: { tag: "JSONParseError" as const, raw: "" } }),
+  }),
 )
 
 if (isOk(result)) {
@@ -38,9 +39,13 @@ const message = matchResult(result, {
 })
 ```
 
+`tryLocalStorageGet` returns `Result<Option<string>, StorageError>` — a
+missing key is a normal outcome (`None`), kept distinct from an actual
+storage failure (`Err`). See [Option](#option) below.
+
 ## Exports
 
-- `@crbroughton/failsafe`: the `Result` type, `Ok`/`Err`, guards, and matchers
+- `@crbroughton/failsafe`: the `Result` type, `Ok`/`Err`, guards, and matchers, plus the `Option` type and its helpers
 - `@crbroughton/failsafe/try`: `Result`-returning wrappers around throwing web/Node APIs
 - `@crbroughton/failsafe/pipe`: plain left-to-right function composition
 - `@crbroughton/failsafe/gen`: generator-based early-return error propagation
@@ -76,12 +81,22 @@ if (isOk(result)) {
 
 ### `ok(result)` / `err(result)`
 
-Extract the value or error as a nullable, for quick one-liners.
+Extract the value or error as an `Option`, for quick one-liners.
 
 ```ts
-const value = ok(result) // T | null
-const error = err(result) // E | null
+const value = ok(result) // Option<T>
+const error = err(result) // Option<E>
+
+const name = matchOption(ok(result), { some: v => v.name, none: () => "Guest" })
 ```
+
+> **Breaking change (1.0.0):** previously returned `T | null` / `E | null`.
+> That made `ok(Ok(null))` and `ok(Err(...))` indistinguishable — both came
+> back as `null`. Returning `Option` fixes that: `{ some: true, value: null }`
+> vs. `{ some: false }`. Replace `ok(result)?.foo ?? fallback` with
+> `matchOption(ok(result), { some: v => v.foo, none: () => fallback })`, or
+> reach for `unwrapOr`/`unwrapOrElse` on the `Result` directly when you don't
+> need the `Option` in between.
 
 ### `safe(fn | promise, mapError?)`
 
@@ -115,7 +130,10 @@ short-circuiting on `Err`.
 
 ```ts
 const result = chain(tryLocalStorageGet("user"), raw =>
-  raw === null ? Err({ tag: "ParseError", raw: "" }) : tryJSONParse<User>(raw))
+  matchOption(raw, {
+    some: value => tryJSONParse<User>(value),
+    none: () => Err({ tag: "ParseError", raw: "" }),
+  }))
 ```
 
 ### `collect(results)`
@@ -192,6 +210,89 @@ match(result.error, {
 })
 ```
 
+### `unwrapOr(result, fallback)` / `unwrapOrElse(result, fn)`
+
+Extract the value from a `Result`, or fall back — for when you just want a
+value and don't need to branch on the error.
+
+```ts
+const timeout = unwrapOr(tryJSONParse<number>(raw), DEFAULT_TIMEOUT)
+
+const config = unwrapOrElse(tryJSONParse<Config>(raw), (error) => {
+  console.warn("using default config:", error)
+  return DEFAULT_CONFIG
+})
+```
+
+### `fromNullable(value, onNull)`
+
+Converts a nullable value into a `Result`, requiring a reason for the
+absence. Use this at the edges — a missing route param, a required field —
+where absence is itself an error the caller must explain. For absence that's
+a normal outcome (an optional setting), use `optionFromNullable` instead,
+which returns an `Option` with no reason attached.
+
+```ts
+const result = fromNullable(
+  req.params.id,
+  (): MissingParamError => ({ tag: "MissingParamError", param: "id" }),
+)
+```
+
+## Option
+
+A tagged union mirroring `Result`, for values that may simply be absent
+(no error attached). Reads the same way as `Result`: `some`/`none` instead
+of `ok`/`error`.
+
+```ts
+type Option<T> = Some<T> | None
+interface Some<T> { some: true, value: T }
+interface None { some: false }
+```
+
+### `some(value)` / `none`
+
+Construct an `Option` directly. `none` is a single stable value — absence
+carries no data.
+
+```ts
+const present = some(42) // { some: true, value: 42 }
+const absent = none // { some: false }
+```
+
+### `isSome(option)` / `isNone(option)`
+
+Type guards that narrow an `Option` to `Some<T>` or `None`.
+
+```ts
+if (isSome(option)) {
+  option.value // T
+}
+```
+
+### `matchOption(option, { some, none })`
+
+Exhaustively matches an `Option`, requiring both handlers.
+
+```ts
+const message = matchOption(option, {
+  some: value => `Got ${value}`,
+  none: () => "Nothing",
+})
+```
+
+### `optionFromNullable(value)`
+
+Converts a nullable value into an `Option`. Absence is fine here — no
+reason is attached, unlike `fromNullable` above. Falsy-but-present values
+(`0`, `""`, `false`) stay `Some`; only `null`/`undefined` become `None`.
+
+```ts
+const timeout = optionFromNullable(config.timeout)
+const effective = matchOption(timeout, { some: v => v, none: () => DEFAULT_TIMEOUT })
+```
+
 ## `@crbroughton/failsafe/try`
 
 `Result`-returning wrappers around browser/Node APIs that throw. Each
@@ -206,10 +307,18 @@ argument types) and returns a `TaggedError` on failure.
 | `tryURIEncode(input)` | `encodeURIComponent` | `URIError` |
 | `tryBase64Decode(input)` | `atob` | `Base64Error` |
 | `tryBase64Encode(input)` | `btoa` | `Base64Error` |
-| `tryLocalStorageGet(key)` | `localStorage.getItem` | `StorageError` |
+| `tryLocalStorageGet(key)` | `localStorage.getItem` | `StorageError`, returns `Result<Option<string>, StorageError>` |
 | `tryLocalStorageSet(key, value)` | `localStorage.setItem` | `StorageError` |
 | `tryURL(input, base?)` | `new URL(...)` | `URLParseError` |
 | `tryStructuredClone<T>(value, options?)` | `structuredClone` | `StructuredCloneError` |
+
+Two more wrap APIs that return `null` rather than throw — absence there is a
+normal outcome, so these return an `Option` directly rather than a `Result`:
+
+| Function | Wraps |
+| --- | --- |
+| `tryQuerySelector<T>(selector, root?)` | `Element.querySelector` |
+| `tryURLSearchParamsGet(params, key)` | `URLSearchParams.get` |
 
 ```ts
 import { tryJSONParse, tryURL } from "@crbroughton/failsafe/try"
@@ -220,6 +329,12 @@ const url = tryURL(userSuppliedString)
 if (isOk(url)) {
   console.log(url.value.hostname)
 }
+
+const button = tryQuerySelector<HTMLButtonElement>("#submit")
+matchOption(button, {
+  some: el => el.addEventListener("click", onSubmit),
+  none: () => console.warn("submit button not found"),
+})
 ```
 
 ## `@crbroughton/failsafe/pipe`
@@ -291,6 +406,18 @@ const login = await gen(async function* () {
 })
 // Result<{ user: UserProfile, token: string }, LoginError>
 ```
+
+## Migrating to 1.0.0
+
+`ok()` and `err()` now return `Option<T>`/`Option<E>` instead of `T | null`/
+`E | null`, and `tryLocalStorageGet` now returns `Result<Option<string>,
+StorageError>` instead of `Result<string | null, StorageError>`. Both are
+breaking changes. To update:
+
+- `ok(result)?.foo ?? fallback` → `matchOption(ok(result), { some: v => v.foo, none: () => fallback })`
+- `err(result)` truthiness checks → `isSome(err(result))`
+- `raw === null ? ... : tryJSONParse(raw)` after `tryLocalStorageGet` →
+  `matchOption(raw, { some: value => tryJSONParse(value), none: () => ... })`
 
 ## Development
 

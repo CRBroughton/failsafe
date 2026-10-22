@@ -1,6 +1,6 @@
 import type { Result } from "./index"
 import { describe, expect, it } from "vitest"
-import { chain, collect, Err, err, isErr, isOk, match, matchResult, Ok, ok, partition, safe } from "./index"
+import { chain, collect, Err, err, fromNullable, isErr, isOk, match, matchResult, Ok, ok, partition, safe, unwrapOr, unwrapOrElse } from "./index"
 
 describe("ok / Err", () => {
   it("creates a successful result", () => {
@@ -27,14 +27,19 @@ describe("isOk / isErr", () => {
 })
 
 describe("ok / err", () => {
-  it("extracts the value from Ok, null from Err", () => {
-    expect(ok(Ok(1))).toBe(1)
-    expect(ok(Err("boom"))).toBeNull()
+  it("extracts the value from Ok as Some, None from Err", () => {
+    expect(ok(Ok(1))).toEqual({ some: true, value: 1 })
+    expect(ok(Err("boom"))).toEqual({ some: false })
   })
 
-  it("extracts the error from Err, null from Ok", () => {
-    expect(err(Err("boom"))).toBe("boom")
-    expect(err(Ok(1))).toBeNull()
+  it("extracts the error from Err as Some, None from Ok", () => {
+    expect(err(Err("boom"))).toEqual({ some: true, value: "boom" })
+    expect(err(Ok(1))).toEqual({ some: false })
+  })
+
+  it("distinguishes Ok(null) from Err — both were indistinguishable as raw nullable returns", () => {
+    expect(ok(Ok(null))).toEqual({ some: true, value: null })
+    expect(ok(Err("boom"))).toEqual({ some: false })
   })
 })
 
@@ -194,5 +199,37 @@ describe("match", () => {
       StorageError: (e: Extract<TestError, { tag: "StorageError" }>) => `storage failed: ${e.key}`,
     })
     expect(message).toBe("bad json: abc")
+  })
+})
+
+describe("fromNullable", () => {
+  it("returns Ok for a present value", () => {
+    expect(fromNullable("hi", () => "missing")).toEqual({ ok: true, value: "hi" })
+  })
+
+  it("returns Err(onNull()) for null", () => {
+    expect(fromNullable(null, () => "missing")).toEqual({ ok: false, error: "missing" })
+  })
+
+  it("returns Err(onNull()) for undefined", () => {
+    expect(fromNullable(undefined, () => "missing")).toEqual({ ok: false, error: "missing" })
+  })
+})
+
+describe("unwrapOr / unwrapOrElse", () => {
+  it("unwrapOr returns the value for Ok", () => {
+    expect(unwrapOr(Ok(1), 0)).toBe(1)
+  })
+
+  it("unwrapOr returns the fallback for Err", () => {
+    expect(unwrapOr(Err("boom"), 0)).toBe(0)
+  })
+
+  it("unwrapOrElse returns the value for Ok", () => {
+    expect(unwrapOrElse(Ok(1), () => 0)).toBe(1)
+  })
+
+  it("unwrapOrElse computes the fallback from the error for Err", () => {
+    expect(unwrapOrElse(Err("boom"), error => error.length)).toBe(4)
   })
 })
