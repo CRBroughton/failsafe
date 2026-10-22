@@ -1,7 +1,7 @@
 {
   "name": "@crbroughton/failsafe-vitest",
   "type": "module",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Custom vitest matchers for @crbroughton/failsafe's Result type",
   "license": "MIT",
   "repository": {

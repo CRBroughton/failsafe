@@ -1,5 +1,12 @@
 # @crbroughton/failsafe-vitest
 
+## 0.1.3
+
+### Patch Changes
+
+- Updated dependencies [6e174a1]
+  - @crbroughton/failsafe@1.0.0
+
 ## 0.1.2
 
 ### Patch Changes
