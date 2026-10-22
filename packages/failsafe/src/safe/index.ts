@@ -1,4 +1,9 @@
 /* eslint-disable ts/no-redeclare */
+import type { Option } from "../option"
+import { isNone, isSome, matchOption, none, optionFromNullable, some } from "../option"
+
+export type { None, Option, Some } from "../option"
+export { isNone, isSome, matchOption, none, optionFromNullable, some }
 
 /**
  * Represents a successful result containing a value.
@@ -115,47 +120,47 @@ export function isErr<T, E>(result: Result<T, E>): result is Err<E> {
 }
 
 /**
- * Extracts the value from a Result if Ok, otherwise returns null.
- * Convenient for converting Result to nullable value.
+ * Extracts the value from a Result if Ok, otherwise None.
+ * Convenient for converting Result to an optional value.
  *
  * @template T The type of the success value
  * @template E The type of the error
  * @param result The Result to extract from
- * @returns The value if Ok, null if Err
+ * @returns Some(value) if Ok, None if Err
  *
  * @example
  * ```ts
  * const result = safe(() => JSON.parse(raw))
- * const value = ok(result) // T | null
+ * const value = ok(result) // Option<T>
  *
- * const name = ok(result)?.name ?? 'Guest'
+ * const name = matchOption(ok(result), { some: (v) => v.name, none: () => 'Guest' })
  * ```
  */
-export function ok<T, E>(result: Result<T, E>): T | null {
-  return result.ok === true ? result.value : null
+export function ok<T, E>(result: Result<T, E>): Option<T> {
+  return result.ok === true ? some(result.value) : none
 }
 
 /**
- * Extracts the error from a Result if Err, otherwise returns null.
- * Convenient for converting Result to nullable error.
+ * Extracts the error from a Result if Err, otherwise None.
+ * Convenient for converting Result to an optional error.
  *
  * @template T The type of the success value
  * @template E The type of the error
  * @param result The Result to extract from
- * @returns The error if Err, null if Ok
+ * @returns Some(error) if Err, None if Ok
  *
  * @example
  * ```ts
  * const result = safe(() => JSON.parse(raw))
- * const error = err(result) // E | null
+ * const error = err(result) // Option<E>
  *
- * if (error) {
- *   console.error('Failed:', error)
+ * if (isSome(error)) {
+ *   console.error('Failed:', error.value)
  * }
  * ```
  */
-export function err<T, E>(result: Result<T, E>): E | null {
-  return result.ok === true ? null : result.error
+export function err<T, E>(result: Result<T, E>): Option<E> {
+  return result.ok === true ? none : some(result.error)
 }
 
 /**
@@ -291,7 +296,10 @@ export function safe<T, E = Error>(
  * @example
  * ```ts
  * const result = chain(tryLocalStorageGet('user'), (raw) =>
- *   raw === null ? Err({ tag: 'ParseError', raw: '' }) : tryJSONParse<User>(raw))
+ *   matchOption(raw, {
+ *     some: (value) => tryJSONParse<User>(value),
+ *     none: () => Err({ tag: 'ParseError', raw: '' }),
+ *   }))
  * ```
  */
 export function chain<T, U, E>(
@@ -462,4 +470,75 @@ export function match<
 // implementation signature intentionally loose; the exported overload above enforces exactness (no extra tags) at call sites
 export function match(error: { tag: string }, handlers: Record<string, (error: any) => unknown>): unknown {
   return handlers[error.tag]!(error)
+}
+
+/**
+ * Converts a nullable value into a Result, requiring a reason for the
+ * absence. Use this when absence is an error the caller must explain
+ * (a missing route param, a required field) — unlike `optionFromNullable`
+ * (from `../option`), which returns an `Option` and throws away the reason.
+ *
+ * This is the one place `null` and `undefined` are both deliberately
+ * allowed in — it's the boundary adapter that converts them away.
+ *
+ * @template T The type of the value when present
+ * @template E The error type produced when the value is absent
+ * @param value The nullable value to convert
+ * @param onNull Called to produce the error when value is null or undefined
+ * @returns Ok(value) if present, Err(onNull()) if null or undefined
+ *
+ * @example
+ * ```ts
+ * const result = fromNullable(req.params.id, (): MissingParamError => ({ tag: 'MissingParamError', param: 'id' }))
+ * ```
+ */
+export function fromNullable<T, E>(
+  // eslint-disable-next-line failsafe/prefer-option-over-null -- the boundary adapter: this is the one place null/undefined are deliberately allowed in
+  value: T | null | undefined,
+  onNull: () => E,
+): Result<NonNullable<T>, E> {
+  return value == null ? Err(onNull()) : Ok(value)
+}
+
+/**
+ * Extracts the value from a Result if Ok, otherwise returns the given
+ * fallback. For when a caller just wants a value and doesn't need to
+ * inspect the error.
+ *
+ * @template T The type of the success value
+ * @template E The type of the error
+ * @param result The Result to extract from
+ * @param fallback The value to return if result is Err
+ * @returns result.value if Ok, fallback if Err
+ *
+ * @example
+ * ```ts
+ * const timeout = unwrapOr(tryJSONParse<number>(raw), DEFAULT_TIMEOUT)
+ * ```
+ */
+export function unwrapOr<T, E>(result: Result<T, E>, fallback: T): T {
+  return result.ok ? result.value : fallback
+}
+
+/**
+ * Extracts the value from a Result if Ok, otherwise computes a fallback
+ * from the error. Like `unwrapOr`, but the fallback can depend on why it
+ * failed.
+ *
+ * @template T The type of the success value
+ * @template E The type of the error
+ * @param result The Result to extract from
+ * @param fn Called with the error to produce a fallback value
+ * @returns result.value if Ok, fn(result.error) if Err
+ *
+ * @example
+ * ```ts
+ * const config = unwrapOrElse(tryJSONParse<Config>(raw), (error) => {
+ *   console.warn('using default config:', error)
+ *   return DEFAULT_CONFIG
+ * })
+ * ```
+ */
+export function unwrapOrElse<T, E>(result: Result<T, E>, fn: (error: E) => T): T {
+  return result.ok ? result.value : fn(result.error)
 }

@@ -27,7 +27,7 @@ const modules = [
   {
     to: "/eslint",
     name: "eslint-plugin-failsafe",
-    pkg: "eslint-plugin-failsafe",
+    pkg: "@crbroughton/eslint-plugin-failsafe",
     description: "The no-raw-throwing-call rule — catches raw calls to throwing APIs before they ship.",
     snippet: "JSON.parse(raw) // flagged",
   },

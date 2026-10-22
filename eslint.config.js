@@ -50,6 +50,28 @@ export default antfu(
     ...failsafe.configs.recommended,
   },
   {
+    // Dogfood the plugin's own (opt-in) prefer-option-over-null rule on the
+    // library's own source — nullable inputs get converted to Option/Result
+    // at the boundary, so nothing past that point should write a null/
+    // undefined type again. Scoped to packages/failsafe/src rather than the
+    // whole repo: this is the library enforcing its own public-API policy,
+    // not a project-wide style rule — unrelated packages (the eslint
+    // plugin, the playground app) have their own ordinary uses of
+    // `null`/`undefined` (DOM APIs, `typeof x === "object" && x !== null`
+    // guards) that have nothing to do with this policy.
+    files: ["packages/failsafe/src/**/*.ts"],
+    ignores: [
+      "**/*.test.ts",
+      "**/*.type-test.ts",
+      "packages/failsafe/src/option/**",
+      "packages/failsafe/src/try/**",
+    ],
+    plugins: { failsafe },
+    rules: {
+      "failsafe/prefer-option-over-null": "error",
+    },
+  },
+  {
     // antfu's vue() config wires vue-eslint-parser's nested <script> parser
     // to @typescript-eslint/parser when `typescript: true`, but never
     // forwards project info to it — so typed rules fail outright inside

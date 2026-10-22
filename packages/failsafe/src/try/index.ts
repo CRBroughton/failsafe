@@ -1,4 +1,6 @@
+import type { Option } from "../option"
 import type { Result, TaggedError } from "../safe"
+import { optionFromNullable } from "../option"
 import { safe } from "../safe"
 
 /**
@@ -155,18 +157,26 @@ export function tryBase64Encode(input: string): Result<string, Base64Error> {
  * throw on its own, but this exists so a get→parse pipeline stays
  * consistently Result-shaped throughout (pair with tryJSONParse via chain).
  *
+ * A missing key is a normal outcome, not a storage failure, so it comes
+ * back as `None` rather than being folded into `StorageError` — the two
+ * situations ("storage is broken" vs. "nothing was ever stored here")
+ * stay distinguishable.
+ *
  * @param key The storage key to read
- * @returns Ok(value or null) or Err(StorageError)
+ * @returns Ok(Some(value) or None) or Err(StorageError)
  *
  * @example
  * ```ts
  * const result = chain(tryLocalStorageGet('user'), (raw) =>
- *   raw === null ? Err({ tag: 'JSONParseError', raw: '' }) : tryJSONParse<User>(raw))
+ *   matchOption(raw, {
+ *     some: (value) => tryJSONParse<User>(value),
+ *     none: () => Err({ tag: 'JSONParseError', raw: '' }),
+ *   }))
  * ```
  */
-export function tryLocalStorageGet(key: string): Result<string | null, StorageError> {
+export function tryLocalStorageGet(key: string): Result<Option<string>, StorageError> {
   return safe(
-    () => localStorage.getItem(key),
+    () => optionFromNullable(localStorage.getItem(key)),
     (): StorageError => ({ tag: "StorageError", key }),
   )
 }
@@ -227,4 +237,49 @@ export function tryStructuredClone<T>(
     () => structuredClone(value, options),
     (): StructuredCloneError => ({ tag: "StructuredCloneError" }),
   )
+}
+
+/**
+ * Safely queries the DOM for the first matching element. Wraps
+ * querySelector/querySelectorAll, which return null/empty rather than
+ * throwing — not finding a match is a normal outcome, so this returns an
+ * Option rather than a Result.
+ *
+ * @param selector The CSS selector to query
+ * @param root The node to query within (defaults to document)
+ * @returns Some(element) if found, None otherwise
+ *
+ * @example
+ * ```ts
+ * const button = tryQuerySelector<HTMLButtonElement>('#submit')
+ * matchOption(button, {
+ *   some: (el) => el.addEventListener('click', onSubmit),
+ *   none: () => console.warn('submit button not found'),
+ * })
+ * ```
+ */
+export function tryQuerySelector<T extends Element = Element>(
+  selector: string,
+  root: ParentNode = document,
+): Option<T> {
+  return optionFromNullable(root.querySelector<T>(selector))
+}
+
+/**
+ * Safely reads a query-string parameter. Wraps URLSearchParams.get, which
+ * returns null rather than throwing — a missing parameter is a normal
+ * outcome, so this returns an Option rather than a Result.
+ *
+ * @param params The URLSearchParams to read from
+ * @param key The parameter name to read
+ * @returns Some(value) if present, None otherwise
+ *
+ * @example
+ * ```ts
+ * const page = tryURLSearchParamsGet(new URLSearchParams(location.search), 'page')
+ * const pageNumber = matchOption(page, { some: (v) => Number(v), none: () => 1 })
+ * ```
+ */
+export function tryURLSearchParamsGet(params: URLSearchParams, key: string): Option<string> {
+  return optionFromNullable(params.get(key))
 }

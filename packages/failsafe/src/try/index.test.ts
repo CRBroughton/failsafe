@@ -7,10 +7,12 @@ import {
   tryJSONStringify,
   tryLocalStorageGet,
   tryLocalStorageSet,
+  tryQuerySelector,
   tryStructuredClone,
   tryURIDecode,
   tryURIEncode,
   tryURL,
+  tryURLSearchParamsGet,
 } from "./index"
 
 afterEach(() => {
@@ -122,11 +124,11 @@ describe("tryBase64Decode / tryBase64Encode", () => {
 describe("tryLocalStorageGet / tryLocalStorageSet", () => {
   it("writes and reads a value", () => {
     expect(tryLocalStorageSet("key", "value")).toEqual({ ok: true, value: undefined })
-    expect(tryLocalStorageGet("key")).toEqual({ ok: true, value: "value" })
+    expect(tryLocalStorageGet("key")).toEqual({ ok: true, value: { some: true, value: "value" } })
   })
 
-  it("returns Ok(null) for a missing key", () => {
-    expect(tryLocalStorageGet("missing")).toEqual({ ok: true, value: null })
+  it("returns Ok(None) for a missing key, distinct from a StorageError", () => {
+    expect(tryLocalStorageGet("missing")).toEqual({ ok: true, value: { some: false } })
   })
 
   it("returns a StorageError when setItem throws", () => {
@@ -187,5 +189,41 @@ describe("tryStructuredClone", () => {
     const result = tryStructuredClone(buffer, { transfer: [buffer] })
     expect(isOk(result)).toBe(true)
     expect(buffer.byteLength).toBe(0)
+  })
+})
+
+describe("tryQuerySelector", () => {
+  afterEach(() => {
+    document.body.innerHTML = ""
+  })
+
+  it("returns Some(element) when a match is found", () => {
+    document.body.innerHTML = "<button id=\"submit\">Go</button>"
+    const result = tryQuerySelector<HTMLButtonElement>("#submit")
+    expect(result).toEqual({ some: true, value: document.getElementById("submit") })
+  })
+
+  it("returns None when nothing matches", () => {
+    const result = tryQuerySelector("#missing")
+    expect(result).toEqual({ some: false })
+  })
+
+  it("queries within a given root", () => {
+    document.body.innerHTML = "<div id=\"scope\"><span>hi</span></div>"
+    const scope = document.getElementById("scope")!
+    const result = tryQuerySelector("span", scope)
+    expect(result).toEqual({ some: true, value: scope.querySelector("span") })
+  })
+})
+
+describe("tryURLSearchParamsGet", () => {
+  it("returns Some(value) when the key is present", () => {
+    const params = new URLSearchParams("page=2")
+    expect(tryURLSearchParamsGet(params, "page")).toEqual({ some: true, value: "2" })
+  })
+
+  it("returns None when the key is missing", () => {
+    const params = new URLSearchParams("page=2")
+    expect(tryURLSearchParamsGet(params, "missing")).toEqual({ some: false })
   })
 })

@@ -19,12 +19,15 @@
  * @example
  * ```ts
  * // Composing with chain (from '@crbroughton/failsafe') for a Result pipeline:
- * import { chain, Err } from '@crbroughton/failsafe'
+ * import { chain, Err, matchOption } from '@crbroughton/failsafe'
  * import { tryLocalStorageGet, tryJSONParse } from '@crbroughton/failsafe/try'
  *
  * const result = pipe(
  *   tryLocalStorageGet('user'),
- *   (r) => chain(r, (raw) => raw === null ? Err({ tag: 'JSONParseError', raw: '' }) : tryJSONParse<User>(raw)),
+ *   (r) => chain(r, (raw) => matchOption(raw, {
+ *     some: (value) => tryJSONParse<User>(value),
+ *     none: () => Err({ tag: 'JSONParseError', raw: '' }),
+ *   })),
  * )
  * ```
  */

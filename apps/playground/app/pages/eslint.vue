@@ -47,7 +47,7 @@ function runTryHelper() {
 <template>
   <div>
     <h1 class="text-2xl font-bold text-gray-50">
-      eslint-plugin-failsafe
+      @crbroughton/eslint-plugin-failsafe
     </h1>
     <p class="mt-2 text-gray-400">
       The <code>no-raw-throwing-call</code> rule flags direct calls to
@@ -145,7 +145,7 @@ function runTryHelper() {
     <p class="mt-8 text-sm text-gray-500">
       See the
       <a
-        href="https://github.com/CRBroughton/failsafe/blob/master/eslint-plugin-failsafe/docs/rules/no-raw-throwing-call.md"
+        href="https://github.com/CRBroughton/failsafe/blob/master/packages/eslint-plugin-failsafe/docs/rules/no-raw-throwing-call.md"
         target="_blank"
         rel="noopener"
         class="text-gray-300 underline hover:text-gray-100"

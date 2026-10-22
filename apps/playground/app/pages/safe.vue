@@ -10,7 +10,8 @@ import type {
   UpstreamRequest,
   UpstreamResponse,
 } from "#shared/utils/safe.schema"
-import { chain, safe } from "@crbroughton/failsafe"
+import type { Result } from "@crbroughton/failsafe"
+import { chain, Err, isErr, match, Ok, safe } from "@crbroughton/failsafe"
 
 const a = ref(10)
 const b = ref(0)
@@ -47,6 +48,36 @@ async function runUpstream() {
   )
   upstreamResult.value = chain(fetched, upstreamResponse => upstreamResponse)
   upstreamLoading.value = false
+}
+
+// Result is a sum type — Ok<T> | Err<E> — and E here is itself a sum type
+// of two tagged variants. match() requires a handler for every tag, so
+// this is exhaustive at compile time: add a third variant and this
+// won't compile until a handler for it exists too.
+interface EmptyFieldError { tag: "EmptyFieldError", field: string }
+interface InvalidEmailError { tag: "InvalidEmailError", value: string }
+
+function validateEmail(value: string): Result<string, EmptyFieldError | InvalidEmailError> {
+  if (!value) {
+    return Err({ tag: "EmptyFieldError", field: "email" })
+  }
+  if (!value.includes("@")) {
+    return Err({ tag: "InvalidEmailError", value })
+  }
+  return Ok(value)
+}
+
+const emailInput = ref("not-an-email")
+const emailMessage = ref("")
+
+function runValidateEmail() {
+  const result = validateEmail(emailInput.value)
+  emailMessage.value = isErr(result)
+    ? match(result.error, {
+        EmptyFieldError: e => `missing ${e.field}`,
+        InvalidEmailError: e => `"${e.value}" isn't a valid email`,
+      })
+    : `valid: ${result.value}`
 }
 </script>
 
@@ -114,6 +145,33 @@ async function runUpstream() {
           </button>
         </div>
         <ResultDisplay :result="upstreamResult" :loading="upstreamLoading" />
+      </DemoCard>
+
+      <DemoCard title="Result as a sum type" wraps="match(result.error, { ... })">
+        <p class="mb-3 text-sm text-gray-400">
+          <code>Result&lt;T, E&gt;</code> is itself a sum type
+          (<code>Ok&lt;T&gt; | Err&lt;E&gt;</code>), and here <code>E</code>
+          is one too — two tagged variants. <code>match()</code> requires a
+          handler for each; try an empty value vs. one missing
+          <code>@</code>.
+        </p>
+        <div class="flex flex-wrap items-center gap-3">
+          <input
+            v-model="emailInput"
+            type="text"
+            placeholder="email"
+            class="min-w-48 flex-1 rounded border border-gray-700 bg-gray-950 px-3 py-1.5 font-mono text-sm text-gray-100 placeholder-gray-600"
+          >
+          <button
+            class="rounded-md bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-900 hover:bg-white"
+            @click="runValidateEmail"
+          >
+            Run
+          </button>
+        </div>
+        <p v-if="emailMessage" class="mt-4 font-mono text-sm text-gray-300">
+          {{ emailMessage }}
+        </p>
       </DemoCard>
     </div>
   </div>
