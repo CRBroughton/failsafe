@@ -18,16 +18,18 @@
  *
  * @example
  * ```ts
- * // Composing with chain (from '@crbroughton/failsafe') for a Result pipeline:
- * import { chain, Err, matchOption } from '@crbroughton/failsafe'
+ * // Composing with andThen/mapErr/unwrapOr (from '@crbroughton/failsafe')
+ * // for a Result pipeline:
+ * import { andThen, Err, matchOption, unwrapOr } from '@crbroughton/failsafe'
  * import { tryLocalStorageGet, tryJSONParse } from '@crbroughton/failsafe/try'
  *
- * const result = pipe(
+ * const name = pipe(
  *   tryLocalStorageGet('user'),
- *   (r) => chain(r, (raw) => matchOption(raw, {
+ *   andThen((raw) => matchOption(raw, {
  *     some: (value) => tryJSONParse<User>(value),
  *     none: () => Err({ tag: 'JSONParseError', raw: '' }),
  *   })),
+ *   unwrapOr(defaultUser),
  * )
  * ```
  */

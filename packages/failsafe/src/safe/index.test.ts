@@ -1,6 +1,6 @@
 import type { Result } from "./index"
 import { describe, expect, it } from "vitest"
-import { chain, collect, Err, err, fromNullable, isErr, isOk, match, matchResult, Ok, ok, partition, safe, unwrapOr, unwrapOrElse } from "./index"
+import { andThen, chain, collect, Err, err, fromNullable, isErr, isOk, mapErr, match, matchResult, Ok, ok, partition, safe, unwrapOr, unwrapOrElse } from "./index"
 
 describe("ok / Err", () => {
   it("creates a successful result", () => {
@@ -231,5 +231,39 @@ describe("unwrapOr / unwrapOrElse", () => {
 
   it("unwrapOrElse computes the fallback from the error for Err", () => {
     expect(unwrapOrElse(Err("boom"), error => error.length)).toBe(4)
+  })
+
+  it("unwrapOr curried returns the value for Ok", () => {
+    expect(unwrapOr(0)(Ok(1))).toBe(1)
+  })
+
+  it("unwrapOr curried returns the fallback for Err", () => {
+    expect(unwrapOr(0)(Err("boom"))).toBe(0)
+  })
+})
+
+describe("andThen", () => {
+  it("chains through an Ok result", () => {
+    const result = andThen((value: number) => Ok(value + 1))(Ok(1))
+    expect(result).toEqual({ ok: true, value: 2 })
+  })
+
+  it("short-circuits on an Err result", () => {
+    const original = Err("boom")
+    const result = andThen(() => Ok(1))(original)
+    expect(result).toBe(original)
+  })
+})
+
+describe("mapErr", () => {
+  it("leaves an Ok result untouched", () => {
+    const original = Ok(1)
+    const result = mapErr((e: string) => e.length)(original)
+    expect(result).toBe(original)
+  })
+
+  it("transforms the error on an Err result", () => {
+    const result = mapErr((e: string) => e.length)(Err("boom"))
+    expect(result).toEqual({ ok: false, error: 4 })
   })
 })

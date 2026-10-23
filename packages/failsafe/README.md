@@ -224,6 +224,27 @@ const config = unwrapOrElse(tryJSONParse<Config>(raw), (error) => {
 })
 ```
 
+### `andThen(fn)` / `mapErr(fn)` / `unwrapOr(fallback)`
+
+Curried companions to `chain`/`unwrapOr`, for composing a `Result` pipeline
+through `pipe` (from `@crbroughton/failsafe/pipe`) instead of nesting calls.
+`unwrapOr` is overloaded: call it with both arguments for the data-first form
+above, or with just the fallback to get the curried form back.
+
+```ts
+import { andThen, mapErr, unwrapOr } from "@crbroughton/failsafe"
+import { pipe } from "@crbroughton/failsafe/pipe"
+import { tryJSONParse, tryLocalStorageGet } from "@crbroughton/failsafe/try"
+
+const name = pipe(
+  tryLocalStorageGet("user"),
+  andThen(raw => tryJSONParse<User>(raw)),
+  andThen(validateUser),
+  mapErr(e => ({ ...e, source: "storage" })),
+  unwrapOr(defaultUser),
+)
+```
+
 ### `fromNullable(value, onNull)`
 
 Converts a nullable value into a `Result`, requiring a reason for the
@@ -342,8 +363,8 @@ matchOption(button, {
 ### `pipe(value, ...fns)`
 
 Pipes a value through up to five functions, left to right. Deliberately
-independent of `Result`; plain function composition. Compose it with `chain`
-for a `Result` pipeline.
+independent of `Result`; plain function composition. Compose it with
+`andThen`/`mapErr`/`unwrapOr` (curried, see above) for a `Result` pipeline.
 
 ```ts
 import { pipe } from "@crbroughton/failsafe/pipe"
