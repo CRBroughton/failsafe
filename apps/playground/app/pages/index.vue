@@ -1,4 +1,10 @@
 <script setup lang="ts">
+import type { Result, TaggedError } from "@crbroughton/failsafe"
+import type { JSONParseError, StorageError } from "@crbroughton/failsafe/try"
+import { andThen, Err, fromOption, mapErr, Ok, unwrapOr } from "@crbroughton/failsafe"
+import { pipe } from "@crbroughton/failsafe/pipe"
+import { tryJSONParse, tryLocalStorageGet } from "@crbroughton/failsafe/try"
+
 const modules = [
   {
     to: "/safe",
@@ -32,6 +38,36 @@ const modules = [
     snippet: "JSON.parse(raw) // flagged",
   },
 ]
+
+interface User {
+  id: string
+}
+
+type ValidationError = TaggedError<"ValidationError", { reason: string }>
+type UserError = StorageError | JSONParseError | ValidationError
+
+const defaultUser: User = { id: "guest" }
+
+function missingUserError(): StorageError {
+  return { tag: "StorageError", key: "user" }
+}
+
+function parseUser(raw: string): Result<User, UserError> {
+  return tryJSONParse<User>(raw)
+}
+
+function validateUser(user: User): Result<User, UserError> {
+  return user.id.length > 0 ? Ok(user) : Err({ tag: "ValidationError", reason: "missing id" })
+}
+
+const name = pipe(
+  tryLocalStorageGet("user"),
+  fromOption(missingUserError),
+  andThen(parseUser),
+  andThen(validateUser),
+  mapErr(e => ({ ...e, source: "storage" })),
+  unwrapOr(defaultUser),
+)
 </script>
 
 <template>
@@ -40,6 +76,9 @@ const modules = [
       <h1 class="text-4xl font-bold text-gray-50">
         FailSafe
       </h1>
+      <p class="mt-2 text-sm text-gray-500">
+        Welcome, {{ name.id }}
+      </p>
       <p class="mx-auto mt-4 max-w-xl text-gray-400">
         Type-safe error handling utilities for TypeScript. Lightweight,
         dependency-free alternative to neverthrow, plus additional helpers

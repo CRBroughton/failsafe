@@ -224,6 +224,80 @@ const config = unwrapOrElse(tryJSONParse<Config>(raw), (error) => {
 })
 ```
 
+### `andThen(fn)` / `mapErr(fn)` / `unwrapOr(fallback)`
+
+Curried companions to `chain`/`unwrapOr`, for composing a `Result` pipeline
+through `pipe` (from `@crbroughton/failsafe/pipe`) instead of nesting calls.
+`unwrapOr` is overloaded: call it with both arguments for the data-first form
+above, or with just the fallback to get the curried form back.
+
+```ts
+import { andThen, mapErr, unwrapOr } from "@crbroughton/failsafe"
+import { pipe } from "@crbroughton/failsafe/pipe"
+import { tryJSONParse } from "@crbroughton/failsafe/try"
+
+const timeout = pipe(
+  tryJSONParse<number>(raw),
+  andThen(n => (n > 0 ? Ok(n) : Err({ tag: "JSONParseError", raw }))),
+  mapErr(e => ({ ...e, source: "config" })),
+  unwrapOr(DEFAULT_TIMEOUT),
+)
+```
+
+### `fromOption(onNone)`
+
+Collapses a `Result<Option<T>, E>` down to `Result<T, E>`, requiring a
+reason for `None` — mirrors Rust's `Option::ok_or`. Curried, for composing
+through `pipe`: lets a pipeline flow past a step like `tryLocalStorageGet`
+(which returns `Result<Option<string>, StorageError>` to keep "missing"
+distinct from "Err") without a manual `matchOption` in the middle of the
+chain.
+
+A pipeline with steps that each produce a *different* error type needs one
+shared error union across the whole chain — `andThen`/`fromOption` fix `E`
+from the first argument they see, so a later step returning a narrower
+error won't line up on its own. Give each step its own named function with
+an explicit return type pinned to the shared union, rather than inlining
+the steps as anonymous arrows inside `pipe`:
+
+```ts
+import type { Result, TaggedError } from "@crbroughton/failsafe"
+import { andThen, Err, fromOption, mapErr, Ok, unwrapOr } from "@crbroughton/failsafe"
+import { pipe } from "@crbroughton/failsafe/pipe"
+import type { JSONParseError, StorageError } from "@crbroughton/failsafe/try"
+import { tryJSONParse, tryLocalStorageGet } from "@crbroughton/failsafe/try"
+
+interface User { id: string }
+type ValidationError = TaggedError<"ValidationError", { reason: string }>
+type UserError = StorageError | JSONParseError | ValidationError
+
+const defaultUser: User = { id: "guest" }
+
+function missingUserError(): StorageError {
+  return { tag: "StorageError", key: "user" }
+}
+
+function parseUser(raw: string): Result<User, UserError> {
+  return tryJSONParse<User>(raw)
+}
+
+function validateUser(user: User): Result<User, UserError> {
+  return user.id.length > 0 ? Ok(user) : Err({ tag: "ValidationError", reason: "missing id" })
+}
+
+const name = pipe(
+  tryLocalStorageGet("user"),
+  fromOption(missingUserError),
+  andThen(parseUser),
+  andThen(validateUser),
+  mapErr(e => ({ ...e, source: "storage" })),
+  unwrapOr(defaultUser),
+)
+```
+
+See [`apps/playground/app/pages/index.vue`](../../apps/playground/app/pages/index.vue)
+for this example running end to end.
+
 ### `fromNullable(value, onNull)`
 
 Converts a nullable value into a `Result`, requiring a reason for the
@@ -342,8 +416,8 @@ matchOption(button, {
 ### `pipe(value, ...fns)`
 
 Pipes a value through up to five functions, left to right. Deliberately
-independent of `Result`; plain function composition. Compose it with `chain`
-for a `Result` pipeline.
+independent of `Result`; plain function composition. Compose it with
+`andThen`/`mapErr`/`unwrapOr` (curried, see above) for a `Result` pipeline.
 
 ```ts
 import { pipe } from "@crbroughton/failsafe/pipe"

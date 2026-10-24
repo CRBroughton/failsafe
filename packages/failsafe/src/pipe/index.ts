@@ -18,16 +18,18 @@
  *
  * @example
  * ```ts
- * // Composing with chain (from '@crbroughton/failsafe') for a Result pipeline:
- * import { chain, Err, matchOption } from '@crbroughton/failsafe'
- * import { tryLocalStorageGet, tryJSONParse } from '@crbroughton/failsafe/try'
+ * // Composing with andThen/fromOption/unwrapOr (from '@crbroughton/failsafe')
+ * // for a Result pipeline. parseUser is a named function with an explicit
+ * // return type — see the `fromOption` docs for why that matters once a
+ * // pipeline's steps produce different error types.
+ * import { andThen, fromOption, unwrapOr } from '@crbroughton/failsafe'
+ * import { tryLocalStorageGet } from '@crbroughton/failsafe/try'
  *
- * const result = pipe(
+ * const name = pipe(
  *   tryLocalStorageGet('user'),
- *   (r) => chain(r, (raw) => matchOption(raw, {
- *     some: (value) => tryJSONParse<User>(value),
- *     none: () => Err({ tag: 'JSONParseError', raw: '' }),
- *   })),
+ *   fromOption(missingUserError),
+ *   andThen(parseUser),
+ *   unwrapOr(defaultUser),
  * )
  * ```
  */
