@@ -1,6 +1,6 @@
 import type { Result } from "./index"
 import { describe, expect, it } from "vitest"
-import { andThen, chain, collect, Err, err, fromNullable, isErr, isOk, mapErr, match, matchResult, Ok, ok, partition, safe, unwrapOr, unwrapOrElse } from "./index"
+import { andThen, chain, collect, Err, err, fromNullable, fromOption, isErr, isOk, mapErr, match, matchResult, none, Ok, ok, partition, safe, some, unwrapOr, unwrapOrElse } from "./index"
 
 describe("ok / Err", () => {
   it("creates a successful result", () => {
@@ -265,5 +265,23 @@ describe("mapErr", () => {
   it("transforms the error on an Err result", () => {
     const result = mapErr((e: string) => e.length)(Err("boom"))
     expect(result).toEqual({ ok: false, error: 4 })
+  })
+})
+
+describe("fromOption", () => {
+  it("unwraps a Some into Ok", () => {
+    const result = fromOption(() => "missing")(Ok(some(1)))
+    expect(result).toEqual({ ok: true, value: 1 })
+  })
+
+  it("errs via onNone for a None", () => {
+    const result = fromOption(() => "missing")(Ok(none))
+    expect(result).toEqual({ ok: false, error: "missing" })
+  })
+
+  it("passes through an existing Err unchanged", () => {
+    const original = Err("boom")
+    const result = fromOption(() => "missing")(original)
+    expect(result).toBe(original)
   })
 })
