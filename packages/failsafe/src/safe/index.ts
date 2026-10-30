@@ -309,6 +309,97 @@ export function chain<T, U, E>(
   return isOk(result) ? fn(result.value) : result
 }
 
+/**
+ * Curried `chain`, for composing a `Result` pipeline through `pipe`
+ * (from `@crbroughton/failsafe/pipe`) instead of nesting `chain` calls.
+ *
+ * @template T The input success type
+ * @template U The output success type
+ * @template E The error type (shared between input and output)
+ * @param fn A function that takes the unwrapped Ok value and returns a new Result
+ * @returns A function that applies `fn` via `chain` to a given Result
+ *
+ * @example
+ * ```ts
+ * import { andThen } from "@crbroughton/failsafe"
+ * import { pipe } from "@crbroughton/failsafe/pipe"
+ *
+ * const result = pipe(
+ *   tryLocalStorageGet("user"),
+ *   andThen(raw => tryJSONParse<User>(raw)),
+ *   andThen(validateUser),
+ * )
+ * ```
+ */
+export function andThen<T, U, E>(
+  fn: (value: T) => Result<U, E>,
+): (result: Result<T, E>) => Result<U, E> {
+  return result => chain(result, fn)
+}
+
+/**
+ * Transforms the error of a `Result`, leaving an Ok value untouched.
+ * Curried for composing through `pipe` (from `@crbroughton/failsafe/pipe`).
+ *
+ * @template E The input error type
+ * @template F The output error type
+ * @param fn Called with the error to produce a new error, only on Err
+ * @returns A function that maps a given Result's error through `fn`
+ *
+ * @example
+ * ```ts
+ * import { mapErr } from "@crbroughton/failsafe"
+ * import { pipe } from "@crbroughton/failsafe/pipe"
+ *
+ * const result = pipe(
+ *   tryJSONParse<User>(raw),
+ *   mapErr(e => ({ ...e, source: "storage" })),
+ * )
+ * ```
+ */
+export function mapErr<E, F>(
+  fn: (error: E) => F,
+): <T>(result: Result<T, E>) => Result<T, F> {
+  return result => (isOk(result) ? result : Err(fn(result.error)))
+}
+
+/**
+ * Collapses a `Result<Option<T>, E>` down to `Result<T, E>`, requiring a
+ * reason for `None` — mirrors Rust's `Option::ok_or`. Curried for composing
+ * through `pipe` (from `@crbroughton/failsafe/pipe`); lets a `Result`
+ * pipeline flow past a step like `tryLocalStorageGet` (which returns
+ * `Result<Option<string>, StorageError>` to keep "missing" distinct from
+ * "Err") without a manual `matchOption` in the middle of the chain.
+ *
+ * @template T The type of the value when present
+ * @template E The error type (shared on both sides)
+ * @param onNone Called to produce the error when the Ok value is None
+ * @returns A function that unwraps a given Result's Option, or Errs via onNone
+ *
+ * @example
+ * ```ts
+ * import { andThen, fromOption, unwrapOr } from "@crbroughton/failsafe"
+ * import { pipe } from "@crbroughton/failsafe/pipe"
+ *
+ * const name = pipe(
+ *   tryLocalStorageGet("user"),
+ *   fromOption(() => ({ tag: "StorageError", key: "user" }) as const),
+ *   andThen(raw => tryJSONParse<User>(raw)),
+ *   unwrapOr(defaultUser),
+ * )
+ * ```
+ */
+export function fromOption<T, E>(
+  onNone: () => E,
+): (result: Result<Option<T>, E>) => Result<T, E> {
+  return (result) => {
+    if (!isOk(result)) {
+      return result
+    }
+    return isSome(result.value) ? Ok(result.value.value) : Err(onNone())
+  }
+}
+
 type ResultsTuple = readonly Result<any, any>[]
 
 // Checked against Err's own discriminant shape directly, never through
@@ -505,6 +596,11 @@ export function fromNullable<T, E>(
  * fallback. For when a caller just wants a value and doesn't need to
  * inspect the error.
  *
+ * Two overloads: call it with both arguments for a direct data-first
+ * extraction, or with just the fallback to get back a reusable function —
+ * the curried form, for composing through `pipe` (from
+ * `@crbroughton/failsafe/pipe`).
+ *
  * @template T The type of the success value
  * @template E The type of the error
  * @param result The Result to extract from
@@ -515,9 +611,30 @@ export function fromNullable<T, E>(
  * ```ts
  * const timeout = unwrapOr(tryJSONParse<number>(raw), DEFAULT_TIMEOUT)
  * ```
+ *
+ * @example
+ * ```ts
+ * // Curried, for pipe:
+ * import { pipe } from "@crbroughton/failsafe/pipe"
+ *
+ * const name = pipe(
+ *   tryJSONParse<User>(raw),
+ *   unwrapOr(defaultUser),
+ * )
+ * ```
  */
-export function unwrapOr<T, E>(result: Result<T, E>, fallback: T): T {
-  return result.ok ? result.value : fallback
+export function unwrapOr<T, E>(result: Result<T, E>, fallback: T): T
+export function unwrapOr<T>(fallback: T): <E>(result: Result<T, E>) => T
+export function unwrapOr<T, E>(
+  resultOrFallback: Result<T, E> | T,
+  fallback?: T,
+): T | ((result: Result<T, E>) => T) {
+  if (arguments.length >= 2) {
+    const result = resultOrFallback as Result<T, E>
+    return result.ok ? result.value : (fallback as T)
+  }
+  const curriedFallback = resultOrFallback as T
+  return (result: Result<T, E>) => (result.ok ? result.value : curriedFallback)
 }
 
 /**
