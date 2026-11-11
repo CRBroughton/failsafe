@@ -1,7 +1,7 @@
 {
   "name": "@crbroughton/failsafe-vitest",
   "type": "module",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Custom vitest matchers for @crbroughton/failsafe's Result type",
   "license": "MIT",
   "repository": {
@@ -32,9 +32,9 @@
   },
   "devDependencies": {
     "@crbroughton/failsafe": "workspace:*",
-    "@vitest/expect": "^2.1.8",
-    "typescript": "^5.7.2",
-    "unbuild": "^3.0.1",
-    "vitest": "^2.1.8"
+    "@vitest/expect": "catalog:",
+    "typescript": "catalog:",
+    "unbuild": "catalog:",
+    "vitest": "catalog:"
   }
 }

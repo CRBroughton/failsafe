@@ -2,7 +2,7 @@
   "name": "failsafe-monorepo",
   "type": "module",
   "private": true,
-  "packageManager": "pnpm@9.15.0",
+  "packageManager": "pnpm@9.15.9",
   "engines": {
     "node": ">=24"
   },
@@ -14,14 +14,17 @@
     "typecheck": "nx run-many -t typecheck",
     "changeset": "changeset",
     "changeset:version": "changeset version",
-    "release": "nx run-many -t build && changeset publish"
+    "release": "nx run-many -t build && changeset publish",
+    "deps:check": "taze",
+    "deps:update": "taze -w"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^3.9.2",
-    "@changesets/cli": "^3.0.3",
+    "@antfu/eslint-config": "catalog:",
+    "@changesets/cli": "catalog:",
     "@crbroughton/eslint-plugin-failsafe": "workspace:*",
-    "eslint": "^9.17.0",
-    "nx": "^20.3.0",
-    "typescript": "^5.7.2"
+    "eslint": "catalog:",
+    "nx": "catalog:",
+    "taze": "catalog:",
+    "typescript": "catalog:"
   }
 }

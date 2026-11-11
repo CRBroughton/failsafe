@@ -43,3 +43,5 @@ jobs:
 
       - name: Publish to npm
         run: devenv shell -- pnpm exec changeset publish
+        env:
+          NPM_CONFIG_PROVENANCE: true

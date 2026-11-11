@@ -1,8 +1,8 @@
 {
   "name": "@crbroughton/failsafe",
   "type": "module",
-  "version": "1.1.0",
-  "packageManager": "pnpm@9.15.0",
+  "version": "1.1.1",
+  "packageManager": "pnpm@9.15.9",
   "description": "Type-safe error handling utilities for TypeScript",
   "license": "MIT",
   "repository": {
@@ -45,11 +45,11 @@
   },
   "devDependencies": {
     "@crbroughton/eslint-plugin-failsafe": "workspace:*",
-    "@crbroughton/ts-test-utils": "^0.7.0",
-    "@vitest/coverage-v8": "^2.1.8",
-    "happy-dom": "^15.11.7",
-    "typescript": "^5.7.2",
-    "unbuild": "^3.0.1",
-    "vitest": "^2.1.8"
+    "@crbroughton/ts-test-utils": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "happy-dom": "catalog:",
+    "typescript": "catalog:",
+    "unbuild": "catalog:",
+    "vitest": "catalog:"
   }
 }

@@ -1,5 +1,13 @@
 # @crbroughton/failsafe-vitest
 
+## 0.1.5
+
+### Patch Changes
+
+- Bump dependency versions and migrate shared dependency versions to pnpm catalogs
+- Updated dependencies
+  - @crbroughton/failsafe@1.1.1
+
 ## 0.1.4
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @crbroughton/failsafe
 
+## 1.1.1
+
+### Patch Changes
+
+- Bump dependency versions and migrate shared dependency versions to pnpm catalogs
+
 ## 1.1.0
 
 ### Minor Changes
